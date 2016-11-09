@@ -26,7 +26,6 @@
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "periodic_scheduler/periodic_callback.h"
-#include "eint.h"
 #include "gpio.hpp"
 #include "sensor.hpp"
 #include <stdio.h>
@@ -49,21 +48,7 @@ int main(void)
 {
 		scheduler_add_task(new periodicSchedulerTask);
 
-	    //Testing
-	    sensor1 = xSemaphoreCreateBinary();
-	    sensor2 = xSemaphoreCreateBinary();
-	    sensor3 = xSemaphoreCreateBinary();
-	    sensor4 = xSemaphoreCreateBinary();
-	    scheduler_add_task(new PWMtask1(PRIORITY_HIGH));
-	    scheduler_add_task(new PWMtask2(PRIORITY_HIGH));
-	    eint3_enable_port2(0, eint_rising_edge, frontstartTimer);
-	    eint3_enable_port2(0, eint_falling_edge, frontstopTimer);
-	    eint3_enable_port2(1, eint_rising_edge, backstartTimer);
-	    eint3_enable_port2(1, eint_falling_edge, backstopTimer);
-	    eint3_enable_port2(2, eint_rising_edge, leftstartTimer);
-	    eint3_enable_port2(2, eint_falling_edge, leftstopTimer);
-	    eint3_enable_port2(3, eint_rising_edge, rightstartTimer);
-	    eint3_enable_port2(3, eint_falling_edge, rightstopTimer);
+
 
     /**
      * A few basic tasks for this bare-bone system :

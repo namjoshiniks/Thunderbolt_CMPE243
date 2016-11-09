@@ -35,8 +35,8 @@
 #include "can.h"
 #include "_can_dbc/generated_can.h"
 #include "sensor.hpp"
-
-
+#include "ssp1.h"
+#include "eint.h"
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -52,12 +52,28 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	   //CAN initialization
-	    CAN_init(can1, 100, 4, 4, NULL, NULL);
-	    CAN_reset_bus(can1);
-	    CAN_bypass_filter_accept_all_msgs();
-	    return true; // Must return true upon success
+	//enable interrupt pins
+	eint3_enable_port2(0, eint_rising_edge, frontstartTimer);
+	eint3_enable_port2(0, eint_falling_edge, frontstopTimer);
+	eint3_enable_port2(1, eint_rising_edge, backstartTimer);
+	eint3_enable_port2(1, eint_falling_edge, backstopTimer);
+	eint3_enable_port2(2, eint_rising_edge, leftstartTimer);
+	eint3_enable_port2(2, eint_falling_edge, leftstopTimer);
+	eint3_enable_port2(3, eint_rising_edge, rightstartTimer);
+	eint3_enable_port2(3, eint_falling_edge, rightstopTimer);
 
+	//initialize RX1 and RX2 for sensors
+	initializeRX_1();
+	initializeRX_2();
+
+	//enable SSP1
+    ssp1_init();
+
+	//CAN initialization
+	CAN_init(can1, 100, 4, 4, NULL, NULL);
+	CAN_reset_bus(can1);
+	CAN_bypass_filter_accept_all_msgs();
+	return true; // Must return true upon success
 }
 
 /// Register any telemetry variables
@@ -80,11 +96,11 @@ void period_1Hz(uint32_t count)
 	{
 		CAN_reset_bus(can1);
 		CAN_bypass_filter_accept_all_msgs();
-		LE.on(1);
+		LE.on(4);
 	}
 	else
 	{
-		LE.off(1);
+		LE.off(4);
 		static SENSOR_HEARTBEAT_t sensor_heartbeat;
 		sensor_heartbeat.SENSOR_HEARTBEAT_UNSIGNED = 336;
 
@@ -103,69 +119,80 @@ void period_1Hz(uint32_t count)
 		 {
 			printf("Send heartbeat fail!\n");
 		 }
-
 	}
-
 }
 
 void period_10Hz(uint32_t count)
 {
-	  static SENSOR_SONARS_t sonar_data;
-	    sonar_data.SENSOR_SONARS_LEFT_UNSIGNED = leftDistance;
-	    sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED = rightDistance;
-	    sonar_data.SENSOR_SONARS_FRONT_UNSIGNED = frontDistance;
-	    sonar_data.SENSOR_SONARS_BACK_UNSIGNED = backDistance;
-	    //can_msg_t can_msg;
-		can_msg_t can_msg = {0};
+	static SENSOR_SONARS_t sonar_data;
+	sonar_data.SENSOR_SONARS_LEFT_UNSIGNED = leftDistance;
+	sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED = backDistance; //change back after checking wiring
+	sonar_data.SENSOR_SONARS_FRONT_UNSIGNED = frontDistance;
+	sonar_data.SENSOR_SONARS_BACK_UNSIGNED = backDistance;
+	//can_msg_t can_msg;
+	can_msg_t can_msg = {0};
 
-		// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
-		dbc_msg_hdr_t msg_hdr = dbc_encode_SENSOR_SONARS(can_msg.data.bytes, &sonar_data);
-		can_msg.msg_id = msg_hdr.mid;
-		can_msg.frame_fields.data_len = msg_hdr.dlc;
+	// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
+	dbc_msg_hdr_t msg_hdr = dbc_encode_SENSOR_SONARS(can_msg.data.bytes, &sonar_data);
+	can_msg.msg_id = msg_hdr.mid;
+	can_msg.frame_fields.data_len = msg_hdr.dlc;
 
-		// Queue the CAN message to be sent out
-		if(CAN_tx(can1, &can_msg, 0))
-		 {
-		   //printf("Send data success\n");
-		 }
-		 else
-		 {
-			printf("Send data fail!\n");
-		 }
-		if(leftDistance < 20)
-		{
-			LE.on(1);
-		}
-		else
-		{
-			LE.off(1);
-		}
-		if(frontDistance < 20)
-		{
-			LE.on(2);
-		}
-		else
-		{
-			LE.off(2);
-		}
-		if(rightDistance < 20)
-		{
-			LE.on(3);
-		}
-		else
-		{
-			LE.off(3);
-		}
+	// Queue the CAN message to be sent out
+	if(CAN_tx(can1, &can_msg, 0))
+	{
+	   //printf("Send data success\n");
+	}
+	else
+	{
+		printf("Send data fail!\n");
+	}
+
+	static uint8_t leftLED = 0;
+	static uint8_t frontLED = 0;
+	static uint8_t rightLED = 0;
+	static uint8_t LEDmessage;
+
+	setLED(leftDistance, leftLED);
+	setLED(frontDistance, frontLED);
+	setLED(rightDistance, rightLED);
+
+	setLEDmessage(leftLED, frontLED, rightLED, LEDmessage);
+	ssp1_exchange_byte(LEDmessage);
 }
 
 void period_100Hz(uint32_t count)
 {
-   // LE.toggle(3);
+	//Sensor triggering RX
+	static int sensorCount = 0;
+    static GPIO *Sensor_RX1 = new GPIO(P0_30);
+    static GPIO *Sensor_RX2 = new GPIO(P0_29);
+    Sensor_RX1->setAsOutput();
+    Sensor_RX2->setAsOutput();
+	if(sensorCount == 0)
+	{
+		Sensor_RX1->setHigh();
+		Sensor_RX2->setLow();
+	}
+	else if(sensorCount == 4)
+	{
+		printf("DISTANCE 1 and 2 **************\n"); //testing
+		printf("Front: %i\n", frontDistance);
+		printf("Back: %i\n", backDistance);
+		Sensor_RX1->setLow();
+		Sensor_RX2->setHigh();
+	}
+	else if(sensorCount == 8)
+	{
+        printf("DISTANCE 3 and 4 ===============\n"); //testing
+        printf("Left: %i\n", leftDistance); //testing don't need delay
+        printf("Right: %i\n", rightDistance); //testing don't need delay
+		sensorCount = -1;
+	}
+	sensorCount++;
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-   // LE.toggle(4);
 }

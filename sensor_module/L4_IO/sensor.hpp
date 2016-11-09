@@ -29,35 +29,8 @@ extern int leftStop;
 extern int rightStart;
 extern int rightStop;
 
-//Semaphores
-extern SemaphoreHandle_t sensor1;
-extern SemaphoreHandle_t sensor2;
-extern SemaphoreHandle_t sensor3;
-extern SemaphoreHandle_t sensor4;
-
-
-class PWMtask1 : public scheduler_task
- {
- public:
- PWMtask1(uint8_t priority) :
-            scheduler_task("PWM task1", 512*4, priority)
-        {
-
-        }
-    bool Init();
-    bool run(void *p);
-};
-class PWMtask2 : public scheduler_task
- {
- public:
- PWMtask2(uint8_t priority) :
-            scheduler_task("PWM task2", 512*4, priority)
-        {
-
-        }
-    bool Init();
-    bool run(void *p);
-};
+bool initializeRX_1();
+bool initializeRX_2();
 
 void frontstartTimer(void);
 void frontstopTimer(void);
@@ -67,5 +40,8 @@ void leftstartTimer(void);
 void leftstopTimer(void);
 void rightstartTimer(void);
 void rightstopTimer(void);
+
+void setLED(int &distance, uint8_t &LED);
+void setLEDmessage(uint8_t &LED1, uint8_t &LED2, uint8_t &LED3, uint8_t &LEDmessage);
 
 #endif /* L5_APPLICATION_SENSOR_HPP_ */

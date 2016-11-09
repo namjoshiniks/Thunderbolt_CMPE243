@@ -7,6 +7,10 @@
 
 #include "sensor.hpp"
 
+#define RED 0x80
+#define YELLOW 0xC0
+#define GREEN 0x40
+
 int frontStart = 0;
 int frontStop = 0;
 int backStart = 0;
@@ -16,19 +20,12 @@ int leftStop = 0;
 int rightStart = 0;
 int rightStop = 0;
 
-
-
 int frontDistance = 0;
 int backDistance = 0;
 int leftDistance = 0;
 int rightDistance = 0;
 
-SemaphoreHandle_t sensor1 = 0;
-SemaphoreHandle_t sensor2 = 0;
-SemaphoreHandle_t sensor3 = 0;
-SemaphoreHandle_t sensor4 = 0;
-
-bool PWMtask1::Init()
+bool initializeRX_1()
 {
     static GPIO *Sensor_Input = new GPIO(P0_30);
     Sensor_Input->setAsOutput();
@@ -38,52 +35,16 @@ bool PWMtask1::Init()
     delete Sensor_Input;
     return true;
 }
-bool PWMtask1::run(void *p)
-{
-	vTaskDelay(3);
-	static GPIO *Sensor_Input = new GPIO(P0_30);
-    Sensor_Input->setAsOutput();
-    Sensor_Input->setHigh();
-    vTaskDelay(40); //datasheet
-    Sensor_Input->setLow();
-    //vTaskDelay(500); //testing
-    printf("DISTANCE 1 and 2 **************\n"); //testing
-    printf("Front: %i\n", frontDistance);
-    printf("Back: %i\n", backDistance);
-    xSemaphoreGive(sensor1);
-    if(xSemaphoreTake(sensor3, portMAX_DELAY))
-    {
-    }
-    return true;
-}
-bool PWMtask2::Init()
-{
-    static GPIO *Sensor_Input = new GPIO(P0_29);
-    Sensor_Input->setAsOutput();
-    Sensor_Input->setHigh();
-    vTaskDelay(250);
-    Sensor_Input->setLow();
-    delete Sensor_Input;
-    return true;
-}
-bool PWMtask2::run(void *p)
-{
-    if(xSemaphoreTake(sensor1, portMAX_DELAY))
-    {
-    	vTaskDelay(3);
-        static GPIO *Sensor_Input = new GPIO(P0_29);
-        Sensor_Input->setAsOutput();
-        Sensor_Input->setHigh();
-        vTaskDelay(40); //datasheet
-        Sensor_Input->setLow();
-        //vTaskDelay(500); //testing
-        printf("DISTANCE 3 and 4 ===============\n"); //testing
-        printf("Left: %i\n", leftDistance); //testing don't need delay
-        printf("Right: %i\n", rightDistance); //testing don't need delay
 
-    }
-    xSemaphoreGive(sensor3);
-    return true;
+bool initializeRX_2()
+{
+	static GPIO *Sensor_Input = new GPIO(P0_29);
+	Sensor_Input->setAsOutput();
+	Sensor_Input->setHigh();
+	vTaskDelay(250);
+	Sensor_Input->setLow();
+	delete Sensor_Input;
+	return true;
 }
 
 void frontstartTimer(void)
@@ -139,3 +100,22 @@ void rightstopTimer(void)
     portYIELD_FROM_ISR(&yield);
 }
 
+void setLED(int &distance, uint8_t &LED)
+{
+	if(distance < 20)
+	{
+		LED = RED;
+	}
+	else if(distance >= 20 && distance<= 50)
+	{
+		LED = YELLOW;
+	}
+	else
+	{
+		LED = GREEN;
+	}
+}
+void setLEDmessage(uint8_t &LED1, uint8_t &LED2, uint8_t &LED3, uint8_t &LEDmessage)
+{
+	LEDmessage = LED1 | (LED2>>2) | (LED3>>4);
+}
