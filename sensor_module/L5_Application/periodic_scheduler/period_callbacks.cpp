@@ -120,6 +120,16 @@ void period_1Hz(uint32_t count)
 			printf("Send heartbeat fail!\n");
 		 }
 	}
+	static GPIO *headlights = new GPIO(P0_26);
+	headlights->setAsOutput();
+	if(LS.getPercentValue() <= 10)
+	{
+		headlights->setHigh();
+	}
+	else
+	{
+		headlights->setLow();
+	}
 }
 
 void period_10Hz(uint32_t count)
@@ -147,17 +157,7 @@ void period_10Hz(uint32_t count)
 		printf("Send data fail!\n");
 	}
 
-	static uint8_t leftLED = 0;
-	static uint8_t frontLED = 0;
-	static uint8_t rightLED = 0;
-	static uint8_t LEDmessage;
-
-	setLED(leftDistance, leftLED);
-	setLED(frontDistance, frontLED);
-	setLED(rightDistance, rightLED);
-
-	setLEDmessage(leftLED, frontLED, rightLED, LEDmessage);
-	ssp1_exchange_byte(LEDmessage);
+	sendLEDmessage(leftDistance, frontDistance, rightDistance);
 }
 
 void period_100Hz(uint32_t count)

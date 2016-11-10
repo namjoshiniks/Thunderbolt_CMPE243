@@ -100,22 +100,55 @@ void rightstopTimer(void)
     portYIELD_FROM_ISR(&yield);
 }
 
-void setLED(int &distance, uint8_t &LED)
+void sendLEDmessage(int distance1, int distance2, int distance3)
 {
-	if(distance < 20)
+	//get LED information from sensors
+	uint8_t leftLED, frontLED, rightLED;
+
+	if(leftDistance < 20)
 	{
-		LED = RED;
+		leftLED = RED;
 	}
-	else if(distance >= 20 && distance<= 50)
+	else if(leftDistance >=20 && leftDistance < 50)
 	{
-		LED = YELLOW;
+		leftLED = YELLOW;
 	}
 	else
 	{
-		LED = GREEN;
+		leftLED = GREEN;
 	}
+
+	if(frontDistance < 20)
+	{
+		frontLED = RED;
+	}
+	else if(frontDistance >=20 && frontDistance < 50)
+	{
+		frontLED = YELLOW;
+	}
+	else
+	{
+		frontLED = GREEN;
+	}
+
+	if(rightDistance < 20)
+	{
+		rightLED = RED;
+	}
+	else if(rightDistance >=20 && rightDistance < 50)
+	{
+		rightLED = YELLOW;
+	}
+	else
+	{
+		rightLED = GREEN;
+	}
+
+	//combine LEDs into one byte
+	uint8_t LEDmessage = leftLED | (frontLED>>2) | (rightLED>>4);
+
+	//send LED data
+	ssp1_exchange_byte(LEDmessage);
 }
-void setLEDmessage(uint8_t &LED1, uint8_t &LED2, uint8_t &LED3, uint8_t &LEDmessage)
-{
-	LEDmessage = LED1 | (LED2>>2) | (LED3>>4);
-}
+
+

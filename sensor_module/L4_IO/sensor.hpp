@@ -10,6 +10,7 @@
 
 #include "tasks.hpp"
 #include "gpio.hpp"
+#include "ssp1.h"
 #include <stdio.h>
 
 extern int leftDistance;
@@ -41,7 +42,6 @@ void leftstopTimer(void);
 void rightstartTimer(void);
 void rightstopTimer(void);
 
-void setLED(int &distance, uint8_t &LED);
-void setLEDmessage(uint8_t &LED1, uint8_t &LED2, uint8_t &LED3, uint8_t &LEDmessage);
+void sendLEDmessage(int distance1, int distance2, int distance3);
 
 #endif /* L5_APPLICATION_SENSOR_HPP_ */
