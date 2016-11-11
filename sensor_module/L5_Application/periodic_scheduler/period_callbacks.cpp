@@ -120,16 +120,8 @@ void period_1Hz(uint32_t count)
 			printf("Send heartbeat fail!\n");
 		 }
 	}
-	static GPIO *headlights = new GPIO(P0_26);
-	headlights->setAsOutput();
-	if(LS.getPercentValue() <= 10)
-	{
-		headlights->setHigh();
-	}
-	else
-	{
-		headlights->setLow();
-	}
+
+	enableHeadlights();
 }
 
 void period_10Hz(uint32_t count)

@@ -147,8 +147,25 @@ void sendLEDmessage(int distance1, int distance2, int distance3)
 	//combine LEDs into one byte
 	uint8_t LEDmessage = leftLED | (frontLED>>2) | (rightLED>>4);
 
+	static GPIO *chip_select = new GPIO(P1_19);
+	chip_select->setAsOutput();
+	chip_select->setLow();
 	//send LED data
 	ssp1_exchange_byte(LEDmessage);
+	chip_select->setHigh();
 }
 
+void enableHeadlights()
+{
+	static GPIO *headlights = new GPIO(P0_26);
+		headlights->setAsOutput();
+		if(LS.getPercentValue() <= 10)
+		{
+			headlights->setHigh();
+		}
+		else
+		{
+			headlights->setLow();
+		}
+}
 
