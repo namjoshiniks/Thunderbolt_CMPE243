@@ -150,7 +150,8 @@ void sendLEDmessage(int distance1, int distance2, int distance3)
 	static GPIO *chip_select = new GPIO(P1_19);
 	chip_select->setAsOutput();
 	chip_select->setLow();
-	//send LED data
+
+	//send LED data, 8 bit shift register
 	ssp1_exchange_byte(LEDmessage);
 	chip_select->setHigh();
 }

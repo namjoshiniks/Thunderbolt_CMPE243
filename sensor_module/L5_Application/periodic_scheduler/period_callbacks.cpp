@@ -63,8 +63,8 @@ bool period_init(void)
 	eint3_enable_port2(3, eint_falling_edge, rightstopTimer);
 
 	//initialize RX1 and RX2 for sensors
-	initializeRX_1();
-	initializeRX_2();
+	//initializeRX_1();
+	//initializeRX_2();
 
 	//enable SSP1
     ssp1_init();

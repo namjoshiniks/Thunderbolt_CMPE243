@@ -46,7 +46,7 @@
  */
 int main(void)
 {
-		scheduler_add_task(new periodicSchedulerTask);
+	scheduler_add_task(new periodicSchedulerTask);
 
 
 
