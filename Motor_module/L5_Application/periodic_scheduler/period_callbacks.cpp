@@ -36,6 +36,7 @@
 #include "lpc_pwm.hpp"
 #include <stdio.h>
 #include "utilities.h"
+#include "lcd.hpp"
 
 
 MOTOR_HEARTBEAT_t motor_heartbeat = {0};
@@ -72,6 +73,8 @@ bool period_init(void)
     rcv_car.MASTER_DRIVE_ENUM =STOP;
     rcv_car.MASTER_SPEED_ENUM =MEDIUM;
     rcv_car.MASTER_STEER_ENUM =CENTER;
+
+    initializeLCD();
 
     //   static PWM motor(PWM::pwm2, 50);
     //   static PWM servo(PWM::pwm1, 50);

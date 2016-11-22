@@ -7,6 +7,25 @@
 
 #include "lcd.hpp"
 
+void writetoLCD(string data)
+{
+	//next0xFE 0x56
+	int strlength = data.length();
+	char currentChar;
+	for(int i=0; i<strlength; i++)
+	{
+		//set char
+		currentChar = data[i];
+
+		//pass char data
+		ssp0_exchange_byte(data[i]);
+
+		//shift display
+		ssp0_exchange_byte(0xFE);
+		ssp0_exchange_byte(0x56);
+	}
+}
+
 void initializeLCD()
 {
 	//initialize ssp0
@@ -23,12 +42,7 @@ void initializeLCD()
 	ssp0_exchange_byte(0x00);
 	vTaskDelay(2);
 	//Write "Speed: "
-	ssp0_exchange_byte('S'); //S
-	ssp0_exchange_byte('p'); //p
-	ssp0_exchange_byte('e'); //e
-	ssp0_exchange_byte('e'); //e
-	ssp0_exchange_byte('d'); //d
-	ssp0_exchange_byte(':'); //:
+	writetoLCD("Speed: ");
 
 
 	//set cursor row 2 (battery)
@@ -37,22 +51,7 @@ void initializeLCD()
 	ssp0_exchange_byte(0x40);
 	vTaskDelay(2);
 	//write "Battery Percent: "
-	ssp0_exchange_byte('B'); //B
-	ssp0_exchange_byte('a'); //a
-	ssp0_exchange_byte('t'); //t
-	ssp0_exchange_byte('t'); //t
-	ssp0_exchange_byte('e'); //e
-	ssp0_exchange_byte('r'); //r
-	ssp0_exchange_byte('y'); //y
-	ssp0_exchange_byte(' '); //
-	ssp0_exchange_byte('P'); //P
-	ssp0_exchange_byte('e'); //e
-	ssp0_exchange_byte('r'); //r
-	ssp0_exchange_byte('c'); //c
-	ssp0_exchange_byte('e'); //e
-	ssp0_exchange_byte('n'); //n
-	ssp0_exchange_byte('t'); //t
-	ssp0_exchange_byte(':'); //:
+	writetoLCD("Battery Percent: ");
 
 	//set cursor row 3 (next coordinates)
 	ssp0_exchange_byte(0xFE);
@@ -60,30 +59,16 @@ void initializeLCD()
 	ssp0_exchange_byte(0x14);
 	vTaskDelay(2);
 	//write "Next Coordinates: "
-	ssp0_exchange_byte('N'); //N
-	ssp0_exchange_byte('e'); //e
-	ssp0_exchange_byte('x');
-	ssp0_exchange_byte('t');
-	ssp0_exchange_byte(' ');
-	ssp0_exchange_byte('C');
-	ssp0_exchange_byte('o');
-	ssp0_exchange_byte('o');
-	ssp0_exchange_byte('r');
-	ssp0_exchange_byte('d');
-	ssp0_exchange_byte('i');
-	ssp0_exchange_byte('n');
-	ssp0_exchange_byte('a');
-	ssp0_exchange_byte('t');
-	ssp0_exchange_byte('e');
-	ssp0_exchange_byte('s');
-	ssp0_exchange_byte(':');
+	writetoLCD("Next Coordinates: ");
 
 
 	//set cursor row 4 (current direction)
 	ssp0_exchange_byte(0x54);
 	vTaskDelay(2);
+	writetoLCD("Current Direction: ");
 
 }
+
 
 
 
