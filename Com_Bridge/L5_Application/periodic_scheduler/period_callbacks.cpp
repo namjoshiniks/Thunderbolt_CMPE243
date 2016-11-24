@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <stdio.h>
 #include "io.hpp"
 #include "periodic_callback.h"
@@ -38,6 +39,7 @@
 #include "can.h"
 
 #include <string>
+#include <cstring>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "gpio.hpp"
@@ -46,14 +48,22 @@
 #include "utilities.h"
 using namespace std;
 
+
+bool disableflag = false;
+
 int i = 0;
 string Latlng = "";
 void *p;
+string latlon[] = {"", ""};
+string latlon1[] = {"37.337354#", "-121.882924$"};
+long double currentLoc[2];
 long double latitude[100];
 long double longitude[100];
 bool flag1 = false;
 bool flag2 = false;
 bool flag3 = false;
+bool currentLocationFlag = false;
+bool continuousCurrentLocation = false;
 bool isACK = false;
 bool isInitialLocation = false;
 bool isClickEnabled = false;
@@ -71,7 +81,6 @@ const GPS_CURRENT_LOCATION_t               GPS_CURRENT_LOCATION__MIA_MSG = { 0 }
 const uint32_t                             GPS_ACKNOWLEDGEMENT__MIA_MS = 1500;
 const GPS_ACKNOWLEDGEMENT_t                GPS_ACKNOWLEDGEMENT__MIA_MSG ={ 100 };
 Uart3 *u3 = &(Uart3::getInstance());
-
 
 can_msg_t can_msg = { 0 };
 
@@ -101,8 +110,6 @@ bool period_init(void)
     u3->init(38400, 1000, 1000);
     u3->flush();
     setupBT();
-    u3->putline("Nikhil#");
-    //u3->put
 
     return true; // Must return true upon success
 }
@@ -139,6 +146,17 @@ void period_1Hz(uint32_t count)
 	CAN_tx(can1, &can_msg, 0);
 
 	BT(p);
+	if(count % 2 == 0 && latlon[0] != "" && continuousCurrentLocation)
+	{
+		for(int j = 0; j < 2; j++)
+		{
+			const char* s1 ;
+			s1 = latlon[j].c_str();
+			printf("%s",s1);
+			u3->putline(s1);
+
+		}
+	}
 }
 
 void period_10Hz(uint32_t count)
@@ -162,23 +180,45 @@ void period_10Hz(uint32_t count)
 	dbc_handle_mia_GPS_CURRENT_LOCATION(&gpsData, 100);
 	dbc_handle_mia_GPS_ACKNOWLEDGEMENT(&gpsACK, 100);
 
-	if(isInitialLocation == false && gpsData.GPS_LATTITUDE_SIGNED != 0)
+	if(isInitialLocation == false && currentLocationFlag && gpsData.GPS_LATTITUDE_SIGNED != 0 )
 	{
-		printf(" Current Location = %f : %f\n", gpsData.GPS_LATTITUDE_SIGNED, gpsData.GPS_LONGITUDE_SIGNED );
+		//printf(" Current Location = %f : %f\n", gpsData.GPS_LATTITUDE_SIGNED, gpsData.GPS_LONGITUDE_SIGNED );
+		cout << "Sent" << endl;
+		const char* s2 ;
+		ostringstream os1;
+		os1 << gpsData.GPS_LATTITUDE_SIGNED;
+		latlon[0] = os1.str();
+		ostringstream os2;
+		os2 << gpsData.GPS_LONGITUDE_SIGNED;
+		latlon[1] = os2.str();
+		//Continue accepting current location and sending to android
+		latlon[0] = latlon[0] + "#";
+		latlon[1] = latlon[1] + "$";
+		cout << "Latitude " << latlon[0] << endl;
+		cout << "Longitude" << latlon[1] << endl;
+		s2 = latlon[0].c_str();
+		u3->putline(s2);
+		s2 = latlon[1].c_str();
+		u3->putline(s2);
+
+
 		isInitialLocation = true;
 	}
 	else
 	{
 	  if(isClickEnabled == true)
 	  {
+
 		if(count1 < 0 && gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED == 100)
 			count1 = setCount;
 		if(gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED != 0 && count1 >= 0 and !isACK)
 		{
+			printf("Set Count : %d\n", setCount);
 			 printf("Count : %d\n", count1);
 			 m.m0.COM_BRIDGE_TOTAL_COUNT_UNSIGNED = setCount;
 			 m.m0.COM_BRIDGE_CURRENT_COUNT_UNSIGNED = count1;
 			 m.m0.COM_BRIDGE_LATTITUDE_SIGNED = latitude[count1];
+			 cout << "Latitude: " << latitude[count1] << endl;
 			 can_msg = { 0 };
 			 dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_CHECK_POINT_m0(can_msg.data.bytes,&m.m0);
 			 can_msg.msg_id = msg_hdr.mid;
@@ -188,6 +228,7 @@ void period_10Hz(uint32_t count)
 			 m.m1.COM_BRIDGE_TOTAL_COUNT_UNSIGNED = setCount;
 			 m.m1.COM_BRIDGE_CURRENT_COUNT_UNSIGNED = count1;
 			 m.m1.COM_BRIDGE_LONGITUDE_SIGNED = longitude[count1];
+			 cout << "Longitude: " << longitude[count1] << endl;
 			 can_msg = { 0 };
 			 msg_hdr = dbc_encode_COM_BRIDGE_CHECK_POINT_m1(can_msg.data.bytes,&m.m1);
 			 can_msg.msg_id = msg_hdr.mid;
@@ -207,7 +248,22 @@ void period_10Hz(uint32_t count)
 			 startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = { 0 };
 			}
 
+			ostringstream os1;
+			os1 << gpsData.GPS_LATTITUDE_SIGNED;
+			latlon[0] = os1.str();
+			ostringstream os2;
+			os2 << gpsData.GPS_LONGITUDE_SIGNED;
+			latlon[1] = os2.str();
+			const char* s2;
 			//Continue accepting current location and sending to android
+			latlon[0] = latlon[0] + "#";
+			latlon[1] = latlon[1] + "$";
+			s2 = latlon[0].c_str();
+			u3->putline(s2);
+			s2 = latlon[1].c_str();
+			u3->putline(s2);
+			continuousCurrentLocation = true;
+
 			//printf(" Moving CAR Location = %f : %f\n", gpsData.GPS_LATTITUDE_SIGNED, gpsData.GPS_LONGITUDE_SIGNED );
 		}
 	   }
@@ -224,6 +280,8 @@ void period_10Hz(uint32_t count)
 		   }
 	 }
    }
+
+
 }
 
 void period_100Hz(uint32_t count)
@@ -239,10 +297,8 @@ void period_100Hz(uint32_t count)
 		LE.off(3);
 	}
 
-	if(SW.getSwitch(3))
-	{
-		u3->putline("Nikhil#");
-	}
+
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
@@ -275,11 +331,17 @@ void BT(void *p)
 	string temp = "";
 	int i = 0;
 	char c;
+	cout << fixed;
 	while(u3->getChar(&c, 100))
 	{
 		string temp = " ";
 		temp[0] = c;
-		if(c == 'B')
+		if(c == 'C')
+		{
+			cout << "Current" << endl;
+			currentLocationFlag = true;
+		}
+		else if(c == 'B')
 		{
 			isClickEnabled = true;
 			startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = COM_BRIDGE_CLICKED_START_HDR.mid;
@@ -294,16 +356,15 @@ void BT(void *p)
 		}
 		else if(c == '#')
 		{
-			cout << "Latitude :" << Latlng << endl;
-			istringstream(Latlng) >> latitude[i];
-			cout << latitude[i] << endl;
+			 istringstream(Latlng) >> latitude[i];
+
+			//cout << "Latitude: "<< latitude[i]  << endl;
 			Latlng = "";
 		}
 		else if(c == '$')
 		{
-			cout << "Longitude :" << Latlng << endl;
-			istringstream(Latlng) >> longitude[i];
-			cout << longitude[i] << endl;
+			istringstream(Latlng) >> longitude[i] ;
+			//cout <<"Longitude: " << longitude[i] << endl;
 			Latlng = "";
 			i++;
 			setCount++;
