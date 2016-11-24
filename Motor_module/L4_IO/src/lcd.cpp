@@ -69,6 +69,37 @@ void initializeLCD()
 
 }
 
+void updateLCD(string speed, string battery, string coordinates, string direction)
+{
+
+	//go to speed data
+	ssp0_exchange_byte(0xFE);
+	ssp0_exchange_byte(0x45);
+	ssp0_exchange_byte(0x13);
+
+	//delete old speed data
+
+	//go to speed data
+	ssp0_exchange_byte(0xFE);
+	ssp0_exchange_byte(0x45);
+	ssp0_exchange_byte(0x53);
+
+	//delete old battery data
+
+	//go to speed data
+	ssp0_exchange_byte(0xFE);
+	ssp0_exchange_byte(0x45);
+	ssp0_exchange_byte(0x27);
+
+	//delete old coordinates data
+
+	//go to speed data
+	ssp0_exchange_byte(0xFE);
+	ssp0_exchange_byte(0x45);
+	ssp0_exchange_byte(0x67);
+
+	//delete old direction data
+}
 
 
 

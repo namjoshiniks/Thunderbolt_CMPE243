@@ -36,6 +36,7 @@
 #include "_can_dbc/generated_can.h"
 #include "sensor.hpp"
 #include "ssp1.h"
+#include "ssp0.h"
 #include "eint.h"
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
@@ -68,6 +69,9 @@ bool period_init(void)
 
 	//enable SSP1
     ssp1_init();
+
+    //enable SSP0
+    ssp0_init(9600);
 
 	//CAN initialization
 	CAN_init(can1, 100, 4, 4, NULL, NULL);
@@ -122,6 +126,8 @@ void period_1Hz(uint32_t count)
 	}
 
 	enableHeadlights();
+	sendLEDmessage(leftDistance, frontDistance, rightDistance);
+
 }
 
 void period_10Hz(uint32_t count)
@@ -149,7 +155,6 @@ void period_10Hz(uint32_t count)
 		printf("Send data fail!\n");
 	}
 
-	sendLEDmessage(leftDistance, frontDistance, rightDistance);
 }
 
 void period_100Hz(uint32_t count)

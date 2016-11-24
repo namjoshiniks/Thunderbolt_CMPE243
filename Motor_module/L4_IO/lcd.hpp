@@ -17,4 +17,6 @@ void writetoLCD(string data);
 
 void initializeLCD();
 
+void updateLCD(string speed, string battery, string coordinates, string direction);
+
 #endif /* L4_IO_LCD_HPP_ */

@@ -7,9 +7,9 @@
 
 #include "sensor.hpp"
 
-#define RED 0x80
-#define YELLOW 0xC0
-#define GREEN 0x40
+#define RED 0x40
+#define YELLOW 0x00
+#define GREEN 0x80
 
 int frontStart = 0;
 int frontStop = 0;
@@ -146,19 +146,16 @@ void sendLEDmessage(int distance1, int distance2, int distance3)
 
 	//combine LEDs into one byte
 	uint8_t LEDmessage = leftLED | (frontLED>>2) | (rightLED>>4);
-
-	static GPIO *chip_select = new GPIO(P1_19);
-	chip_select->setAsOutput();
-	chip_select->setLow();
+	printf("%i", LEDmessage);
 
 	//send LED data, 8 bit shift register
 	ssp1_exchange_byte(LEDmessage);
-	chip_select->setHigh();
+
 }
 
 void enableHeadlights()
 {
-	static GPIO *headlights = new GPIO(P0_26);
+	static GPIO *headlights = new GPIO(P1_19);
 		headlights->setAsOutput();
 		if(LS.getPercentValue() <= 10)
 		{

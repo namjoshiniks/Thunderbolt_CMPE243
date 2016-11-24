@@ -11,6 +11,7 @@
 #include "tasks.hpp"
 #include "gpio.hpp"
 #include "ssp1.h"
+#include "ssp0.h"
 #include "io.hpp"
 #include <stdio.h>
 
@@ -47,4 +48,5 @@ void sendLEDmessage(int distance1, int distance2, int distance3);
 
 void enableHeadlights();
 
+void initializeLCD();
 #endif /* L5_APPLICATION_SENSOR_HPP_ */
