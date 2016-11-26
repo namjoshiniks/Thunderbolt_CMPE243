@@ -28,49 +28,10 @@
  * do must be completed within 1ms.  Running over the time slot will reset the system.
  */
 
+#include <stdio.h>
 #include <stdint.h>
-#include "io.hpp"
 #include "periodic_callback.h"
-#include "can.h"
-#include "_can_dbc/generated_can.h"
-#include "stdio.h"
-
-#define LEFT_MIN 		20
-#define RIGHT_MIN 		20
-#define FRONT_MIN 		20
-#define LEFT_MIDDLE 	50
-#define RIGHT_MIDDLE 	50
-#define FRONT_MIDDLE 	50
-#define LEFT_MAX 		200
-#define RIGHT_MAX 		200
-#define FRONT_MAX 		200
-
-can_msg_t rx_msg = {0};
-can_msg_t tx_msg = {0};
-
-const uint32_t                             MOTOR_HEARTBEAT__MIA_MS = 3000;
-const MOTOR_HEARTBEAT_t                    MOTOR_HEARTBEAT__MIA_MSG = {0};
-const uint32_t                             SENSOR_HEARTBEAT__MIA_MS = 3000;
-const SENSOR_HEARTBEAT_t                   SENSOR_HEARTBEAT__MIA_MSG = {0};
-const uint32_t                             SENSOR_SONARS__MIA_MS = 3000;
-const SENSOR_SONARS_t                      SENSOR_SONARS__MIA_MSG = {8,8,8,8};
-const uint32_t                             COM_BRIDGE_CLICKED_START__MIA_MS = 3000;
-const COM_BRIDGE_CLICKED_START_t           COM_BRIDGE_CLICKED_START__MIA_MSG = {0};
-const uint32_t                             COM_BRIDGE_STOPALL__MIA_MS = 3000;
-const COM_BRIDGE_STOPALL_t                 COM_BRIDGE_STOPALL__MIA_MSG = {0};
-
-
-static bool turn=0;
-static bool start=false;
-
-MOTOR_HEARTBEAT_t motor_heartbeat_status = {0};
-SENSOR_HEARTBEAT_t sensor_heartbeat_status = {0};
-SENSOR_SONARS_t sensor_data = {0};
-COM_BRIDGE_CLICKED_START_t com_bridge_start = {0};
-COM_BRIDGE_STOPALL_t com_bridge_stop = {0};
-
-
-MASTER_DRIVING_CAR_t motor_drive = {STOP, CENTER, MEDIUM};
+#include "master_module.h"
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
@@ -86,9 +47,7 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
-	CAN_init(can1, 100, 1, 1, NULL, NULL);
-	CAN_bypass_filter_accept_all_msgs();
-	CAN_reset_bus(can1);
+	CAN_setup(can1, 100, 1, 1, NULL, NULL);
     return true; // Must return true upon success
 }
 
@@ -106,202 +65,34 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    // BUS RESET
-    if(CAN_is_bus_off(can1))
-        CAN_reset_bus(can1);
-
-    if(motor_heartbeat_status.MOTOR_HEARTBEAT_UNSIGNED == MOTOR_HEARTBEAT_HDR.mid)
-        LE.on(1);
-    else
-        LE.off(1);
-
-    if(sensor_heartbeat_status.SENSOR_HEARTBEAT_UNSIGNED == SENSOR_HEARTBEAT_HDR.mid)
-        LE.on(2);
-    else
-        LE.off(2);
-
-
-
-
-}
-
-void process_data()
-{
-	if(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED > 50)
-	{
-		if(sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>35)
-		{
-			if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-			{
-		        //MOVE_FORWARD
-		        motor_drive.MASTER_DRIVE_ENUM= DRIVE;
-		        motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		        motor_drive.MASTER_STEER_ENUM = CENTER;
-		        LE.setAll(0);
-			}
-			else
-			{
-				//RIGHT
-                motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-                motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-                motor_drive.MASTER_STEER_ENUM = RIGHT;
-                LE.setAll(0);
-			}
-		}
-		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>20) && (sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED<35))
-		{
-			if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-			{
-		        //LEFT
-		        motor_drive.MASTER_DRIVE_ENUM= DRIVE;
-		        motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		        motor_drive.MASTER_STEER_ENUM = LEFT;
-		        LE.setAll(0);
-			}
-			else
-			{
-	             //STOP
-	             motor_drive.MASTER_DRIVE_ENUM = STOP;
-	             motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-	             motor_drive.MASTER_STEER_ENUM = CENTER;
-	             LE.setAll(15);
-			}
-		}
-	}
-	else if((sensor_data.SENSOR_SONARS_FRONT_UNSIGNED > 20) &&  (sensor_data.SENSOR_SONARS_FRONT_UNSIGNED < 50))
-	{
-		if(sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>35)
-		{
-			if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-			{
-				if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED > sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED)
-				{
-					//FAR_LEFT
-	                motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-	                motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-	                motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
-	                LE.setAll(0);
-				}
-				else
-				{
-					//FAR_RIGHT
-	                motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-	                motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-	                motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
-	                LE.setAll(0);
-				}
-			}
-			else
-			{
-				//FAR_RIGHT
-                motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-                motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-                motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
-                LE.setAll(0);
-			}
-		}
-		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>20) && (sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED<35))
-		{
-			if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-			{
-		        //FAR_LEFT
-		        motor_drive.MASTER_DRIVE_ENUM= DRIVE;
-		        motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		        motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
-		        LE.setAll(0);
-			}
-			else
-			{
-	             //STOP
-	             motor_drive.MASTER_DRIVE_ENUM = STOP;
-	             motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-	             motor_drive.MASTER_STEER_ENUM = CENTER;
-	             LE.setAll(15);
-			}
-		}
-	}
-	else
-	{
-        //STOP
-        motor_drive.MASTER_DRIVE_ENUM = STOP;
-        motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-        motor_drive.MASTER_STEER_ENUM = CENTER;
-        LE.setAll(15);
-	}
+	handle_can_reset(can1);
+	handle_heartbeat_leds();
 }
 
 void period_10Hz(uint32_t count)
 {
-	if(com_bridge_start.COM_BRIDGE_CLICKED_START_UNSIGNED == COM_BRIDGE_CLICKED_START_HDR.mid)
-	{
-		com_bridge_start.COM_BRIDGE_CLICKED_START_UNSIGNED = 0;
-		start = true;
-	}
-
-	if(com_bridge_stop.COM_BRIDGE_STOPALL_UNSIGNED == COM_BRIDGE_STOPALL_HDR.mid)
-	{
-		com_bridge_stop.COM_BRIDGE_STOPALL_UNSIGNED = 0;
-		start = false;
-	}
-
+	bool start = handle_start_stop_signal();
+	//start = true; // To work without start signal from Android app.
 	if(start)
 	{
-		process_data();
+		handle_motors_from_sensor_data();
 	}
 	else
 	{
-        motor_drive.MASTER_DRIVE_ENUM = STOP;
-        motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-        motor_drive.MASTER_STEER_ENUM = CENTER;
-        LE.setAll(15);
+        //STOP
+		default_motor_state();
 	}
 }
 
 void period_100Hz(uint32_t count)
 {
-    dbc_msg_hdr_t msg_header;
-        if(CAN_rx(can1, &rx_msg, 0))
-        {
-            msg_header.mid = rx_msg.msg_id;
-            msg_header.dlc = rx_msg.frame_fields.data_len;
-            if(msg_header.mid == MOTOR_HEARTBEAT_HDR.mid)
-                dbc_decode_MOTOR_HEARTBEAT(&motor_heartbeat_status, rx_msg.data.bytes, &msg_header);
-            if(msg_header.mid == SENSOR_HEARTBEAT_HDR.mid)
-                dbc_decode_SENSOR_HEARTBEAT(&sensor_heartbeat_status, rx_msg.data.bytes, &msg_header);
-            if(msg_header.mid == SENSOR_SONARS_HDR.mid)
-            {
-                dbc_decode_SENSOR_SONARS(&sensor_data, rx_msg.data.bytes, &msg_header);
-                //printf("\n %d %d %d",sensor_data.SENSOR_SONARS_LEFT_UNSIGNED,sensor_data.SENSOR_SONARS_FRONT_UNSIGNED,sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED);
-            }
-            if(msg_header.mid == COM_BRIDGE_CLICKED_START_HDR.mid)
-            	dbc_decode_COM_BRIDGE_CLICKED_START(&com_bridge_start, rx_msg.data.bytes, &msg_header);
-     		if(msg_header.mid == COM_BRIDGE_STOPALL_HDR.mid)
-     			dbc_decode_COM_BRIDGE_STOPALL(&com_bridge_stop, rx_msg.data.bytes, &msg_header);
-        }
-        dbc_handle_mia_MOTOR_HEARTBEAT(&motor_heartbeat_status, 100);
-        dbc_handle_mia_SENSOR_HEARTBEAT(&sensor_heartbeat_status, 100);
-        dbc_handle_mia_COM_BRIDGE_CLICKED_START(&com_bridge_start, 0);
-        dbc_handle_mia_COM_BRIDGE_STOPALL(&com_bridge_stop, 0);
-        // Incrementing time by 0 so that mia will always be in disable state (For time being. Need to give more thought on this)
-        dbc_handle_mia_SENSOR_SONARS(&sensor_data, 100);
-    //    {
-    //        printf("MIA\n");
-    //        LE.on(15);
-    //    }
-    //    else
-    //        LE.off(0);
-
-
-       // printf("\n Drive:%d Steer:%d",motor_drive.MASTER_DRIVE_ENUM,motor_drive.MASTER_STEER_ENUM);
-                    msg_header = dbc_encode_MASTER_DRIVING_CAR(tx_msg.data.bytes, &motor_drive);
-                        tx_msg.msg_id = msg_header.mid;
-                        tx_msg.frame_fields.data_len = msg_header.dlc;
-                        CAN_tx(can1, &tx_msg, 0);
+	handle_can_rx(can1);
+	handle_mia();
+	handle_can_tx(can1);
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
 // scheduler_add_task(new periodicSchedulerTask(run_1Khz = true));
 void period_1000Hz(uint32_t count)
 {
-    LE.toggle(4);
 }
