@@ -9,10 +9,7 @@
 #ifndef L5_APPLICATION_MOTOR_SERVO_CONTROL_H_
 #define L5_APPLICATION_MOTOR_SERVO_CONTROL_H_
 
-
-void Motor_Servo_Set(MASTER_DRIVING_CAR_t,double);
+void initMotorModuleSetup();
+void Motor_Servo_Set(MASTER_DRIVING_CAR_t,float);
 
 #endif /* L5_APPLICATION_MOTOR_SERVO_CONTROL_H_ */
-
-
-

@@ -46,6 +46,7 @@ bool period_init(void)
     CAN_init(can1,100,10,10,NULL, NULL);
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
+    initMotorModuleSetup();
     rcv_car.MASTER_DRIVE_ENUM =STOP;
     rcv_car.MASTER_SPEED_ENUM =MEDIUM;
     rcv_car.MASTER_STEER_ENUM =CENTER;
@@ -82,7 +83,6 @@ void period_10Hz(uint32_t count)
 	    {
 	  	  rotation_wheel++;
 	    }
-  printf("\n************************%d",wheel_rotation_count);
 
    RPM_Speed=wheel_rotation_count * 75;
    if (rcv_car.MASTER_DRIVE_ENUM == STOP)
@@ -95,11 +95,7 @@ void period_10Hz(uint32_t count)
 	   Odometer = rotation_wheel * 0.31;
 	   LD.setNumber(char(Odometer));
    }
-  // printf("\nDistance is %f meter's", Odometer);
 
-
-
-   //printf("\n%f",RPM_Speed);
    wheel_rotation_count=0;
    Motor_Servo_Set(rcv_car,RPM_Speed);
 
