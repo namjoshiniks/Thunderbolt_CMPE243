@@ -51,9 +51,8 @@ using namespace std;
 
 bool disableflag = false;
 
-int i = 0;
 string Latlng = "";
-void *p;
+void *k;
 string latlon[] = {"", ""};
 string latlon1[] = {"37.337354#", "-121.882924$"};
 long double currentLoc[2];
@@ -145,18 +144,18 @@ void period_1Hz(uint32_t count)
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
 	CAN_tx(can1, &can_msg, 0);
 
-	BT(p);
-	if(count % 2 == 0 && latlon[0] != "" && continuousCurrentLocation)
-	{
-		for(int j = 0; j < 2; j++)
-		{
-			const char* s1 ;
-			s1 = latlon[j].c_str();
-			printf("%s",s1);
-			u3->putline(s1);
-
-		}
-	}
+	BT(k);
+//	if(latlon1[0] != "" && count % 2 == 0)
+//	{
+//		for(int j = 0; j < 2; j++)
+//		{
+//			const char* s1 ;
+//			s1 = latlon1[j].c_str();
+//			printf("%s",s1);
+//			u3->putline(s1);
+//
+//		}
+//	}
 }
 
 void period_10Hz(uint32_t count)
@@ -180,106 +179,88 @@ void period_10Hz(uint32_t count)
 	dbc_handle_mia_GPS_CURRENT_LOCATION(&gpsData, 100);
 	dbc_handle_mia_GPS_ACKNOWLEDGEMENT(&gpsACK, 100);
 
-	if(isInitialLocation == false && currentLocationFlag && gpsData.GPS_LATTITUDE_SIGNED != 0 )
+	if(count % 20 == 0 && gpsData.GPS_LATTITUDE_SIGNED != 0 && gpsData.GPS_LONGITUDE_SIGNED != 0)
 	{
 		//printf(" Current Location = %f : %f\n", gpsData.GPS_LATTITUDE_SIGNED, gpsData.GPS_LONGITUDE_SIGNED );
-		cout << "Sent" << endl;
+		cout << "Sent" << fixed << endl;
 		const char* s2 ;
 		ostringstream os1;
-		os1 << gpsData.GPS_LATTITUDE_SIGNED;
+		os1 << fixed << gpsData.GPS_LATTITUDE_SIGNED;
 		latlon[0] = os1.str();
 		ostringstream os2;
-		os2 << gpsData.GPS_LONGITUDE_SIGNED;
+		os2<< fixed << gpsData.GPS_LONGITUDE_SIGNED;
 		latlon[1] = os2.str();
 		//Continue accepting current location and sending to android
 		latlon[0] = latlon[0] + "#";
 		latlon[1] = latlon[1] + "$";
-		cout << "Latitude " << latlon[0] << endl;
+		cout << "Latitude " <<  latlon[0] << endl;
 		cout << "Longitude" << latlon[1] << endl;
 		s2 = latlon[0].c_str();
 		u3->putline(s2);
 		s2 = latlon[1].c_str();
 		u3->putline(s2);
+		gpsData.GPS_LATTITUDE_SIGNED = 0;
+		gpsData.GPS_LONGITUDE_SIGNED = 0;
+	}
 
+  if(isClickEnabled == true)
+  {
 
-		isInitialLocation = true;
+	if(count1 < 0 && gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED == 100)
+		count1 = setCount;
+	if(gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED != 0 && count1 >= 0 and !isACK)
+	{
+		printf("Set Count : %d\n", setCount);
+		 printf("Count : %d\n", count1);
+		 m.m0.COM_BRIDGE_TOTAL_COUNT_UNSIGNED = setCount;
+		 m.m0.COM_BRIDGE_CURRENT_COUNT_UNSIGNED = count1;
+		 m.m0.COM_BRIDGE_LATTITUDE_SIGNED = latitude[count1];
+		 cout << "Latitude: " << latitude[count1] << endl;
+		 can_msg = { 0 };
+		 dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_CHECK_POINT_m0(can_msg.data.bytes,&m.m0);
+		 can_msg.msg_id = msg_hdr.mid;
+		 can_msg.frame_fields.data_len = msg_hdr.dlc;
+		 CAN_tx(can1, &can_msg, 0);
+
+		 m.m1.COM_BRIDGE_TOTAL_COUNT_UNSIGNED = setCount;
+		 m.m1.COM_BRIDGE_CURRENT_COUNT_UNSIGNED = count1;
+		 m.m1.COM_BRIDGE_LONGITUDE_SIGNED = longitude[count1];
+		 cout << "Longitude: " << longitude[count1] << endl;
+		 can_msg = { 0 };
+		 msg_hdr = dbc_encode_COM_BRIDGE_CHECK_POINT_m1(can_msg.data.bytes,&m.m1);
+		 can_msg.msg_id = msg_hdr.mid;
+		 can_msg.frame_fields.data_len = msg_hdr.dlc;
+		 CAN_tx(can1, &can_msg, 0);
+		 count1--;
 	}
 	else
 	{
-	  if(isClickEnabled == true)
-	  {
-
-		if(count1 < 0 && gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED == 100)
-			count1 = setCount;
-		if(gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED != 0 && count1 >= 0 and !isACK)
+		if(startSig.COM_BRIDGE_CLICKED_START_UNSIGNED)
 		{
-			printf("Set Count : %d\n", setCount);
-			 printf("Count : %d\n", count1);
-			 m.m0.COM_BRIDGE_TOTAL_COUNT_UNSIGNED = setCount;
-			 m.m0.COM_BRIDGE_CURRENT_COUNT_UNSIGNED = count1;
-			 m.m0.COM_BRIDGE_LATTITUDE_SIGNED = latitude[count1];
-			 cout << "Latitude: " << latitude[count1] << endl;
-			 can_msg = { 0 };
-			 dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_CHECK_POINT_m0(can_msg.data.bytes,&m.m0);
-			 can_msg.msg_id = msg_hdr.mid;
-			 can_msg.frame_fields.data_len = msg_hdr.dlc;
-			 CAN_tx(can1, &can_msg, 0);
-
-			 m.m1.COM_BRIDGE_TOTAL_COUNT_UNSIGNED = setCount;
-			 m.m1.COM_BRIDGE_CURRENT_COUNT_UNSIGNED = count1;
-			 m.m1.COM_BRIDGE_LONGITUDE_SIGNED = longitude[count1];
-			 cout << "Longitude: " << longitude[count1] << endl;
-			 can_msg = { 0 };
-			 msg_hdr = dbc_encode_COM_BRIDGE_CHECK_POINT_m1(can_msg.data.bytes,&m.m1);
-			 can_msg.msg_id = msg_hdr.mid;
-			 can_msg.frame_fields.data_len = msg_hdr.dlc;
-			 CAN_tx(can1, &can_msg, 0);
-			 count1--;
+		 can_msg = { 0 };
+		 dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_CLICKED_START(can_msg.data.bytes,&startSig);
+		 can_msg.msg_id = msg_hdr.mid;
+		 can_msg.frame_fields.data_len = msg_hdr.dlc;
+		 CAN_tx(can1, &can_msg, 0);
+		 startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = { 0 };
 		}
-		else
-		{
-			if(startSig.COM_BRIDGE_CLICKED_START_UNSIGNED)
-			{
-			 can_msg = { 0 };
-			 dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_CLICKED_START(can_msg.data.bytes,&startSig);
-			 can_msg.msg_id = msg_hdr.mid;
-			 can_msg.frame_fields.data_len = msg_hdr.dlc;
-			 CAN_tx(can1, &can_msg, 0);
-			 startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = { 0 };
-			}
 
-			ostringstream os1;
-			os1 << gpsData.GPS_LATTITUDE_SIGNED;
-			latlon[0] = os1.str();
-			ostringstream os2;
-			os2 << gpsData.GPS_LONGITUDE_SIGNED;
-			latlon[1] = os2.str();
-			const char* s2;
-			//Continue accepting current location and sending to android
-			latlon[0] = latlon[0] + "#";
-			latlon[1] = latlon[1] + "$";
-			s2 = latlon[0].c_str();
-			u3->putline(s2);
-			s2 = latlon[1].c_str();
-			u3->putline(s2);
-			continuousCurrentLocation = true;
-
-			//printf(" Moving CAR Location = %f : %f\n", gpsData.GPS_LATTITUDE_SIGNED, gpsData.GPS_LONGITUDE_SIGNED );
-		}
-	   }
-	 else
-	 {
-		   if(isStopEnabled)
-		   {
-			can_msg = { 0 };
-			stopSig.COM_BRIDGE_STOPALL_UNSIGNED = COM_BRIDGE_STOPALL_HDR.mid;
-			dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_STOPALL(can_msg.data.bytes,&stopSig);
-			can_msg.msg_id = msg_hdr.mid;
-			can_msg.frame_fields.data_len = msg_hdr.dlc;
-			CAN_tx(can1, &can_msg, 0);
-		   }
-	 }
+	}
    }
+ else
+ {
+	   if(isStopEnabled)
+	   {
+		can_msg = { 0 };
+		stopSig.COM_BRIDGE_STOPALL_UNSIGNED = COM_BRIDGE_STOPALL_HDR.mid;
+		dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_STOPALL(can_msg.data.bytes,&stopSig);
+		can_msg.msg_id = msg_hdr.mid;
+		can_msg.frame_fields.data_len = msg_hdr.dlc;
+		CAN_tx(can1, &can_msg, 0);
+		isStopEnabled = false;
+	   }
+ }
+
 
 
 }
@@ -334,14 +315,9 @@ void BT(void *p)
 	cout << fixed;
 	while(u3->getChar(&c, 100))
 	{
-		string temp = " ";
+		temp = " ";
 		temp[0] = c;
-		if(c == 'C')
-		{
-			cout << "Current" << endl;
-			currentLocationFlag = true;
-		}
-		else if(c == 'B')
+		if(c == 'B')
 		{
 			isClickEnabled = true;
 			startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = COM_BRIDGE_CLICKED_START_HDR.mid;
