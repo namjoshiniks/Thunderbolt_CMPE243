@@ -18,12 +18,17 @@ const uint32_t      MASTER_DRIVING_CAR__MIA_MS = 3000;
 const MASTER_DRIVING_CAR_t    MASTER_DRIVING_CAR__MIA_MSG = {STOP,CENTER,MEDIUM};
 int stop_count;
 int wheel_rotation_count=0;
-double RPM_Speed=0;
+int rotation_wheel = 0;        //stores the wheel rotation count
+int magnet_count = 0;
+float Odometer = 0;
+static float RPM_Speed=0;
 
 void RPMSpeed_Func()
 {
  wheel_rotation_count++;
+ magnet_count++;
 }
+
 
 
 bool period_init(void)
@@ -32,7 +37,7 @@ bool period_init(void)
     CAN_init(can1,100,10,10,NULL, NULL);
     CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can1);
-
+    initMotorModuleSetup();
     rcv_car.MASTER_DRIVE_ENUM =STOP;
     rcv_car.MASTER_SPEED_ENUM =MEDIUM;
     rcv_car.MASTER_STEER_ENUM =CENTER;
@@ -58,22 +63,46 @@ void period_1Hz(uint32_t count)
     CAN_tx(can1, &msg, 0);
 
 
-    //RPM speed Logic
-      RPM_Speed=wheel_rotation_count * 7.5;
-      wheel_rotation_count=0;
-
 }
 void period_10Hz(uint32_t count)
 {
+	 //RPM speed Logic
 	 if(count<12)
-		   {
-		       rcv_car.MASTER_DRIVE_ENUM = STOP;
-		   }
-	 Motor_Servo_Set(rcv_car,RPM_Speed);
+   {
+	   rcv_car.MASTER_DRIVE_ENUM = STOP;
+
+   }
+	   if(magnet_count % 8 == 0 )
+	    {
+	  	  rotation_wheel++;
+	    }
+  printf("\n************************%d",wheel_rotation_count);
+
+   RPM_Speed=wheel_rotation_count * 75;
+   if (rcv_car.MASTER_DRIVE_ENUM == STOP)
+   {
+	   //Odometer = 0;
+	   LD.setNumber(char(Odometer));
+
+   }
+   else
+   {
+	   Odometer = rotation_wheel * 0.31;
+	   LD.setNumber(char(Odometer));
+   }
+  // printf("\nDistance is %f meter's", Odometer);
+
+
+
+   //printf("\n%f",RPM_Speed);
+   wheel_rotation_count=0;
+   Motor_Servo_Set(rcv_car,RPM_Speed);
+
 }
 
 void period_100Hz(uint32_t count)
 {
+
     while(CAN_rx(can1,&msg,0))
                {
                    dbc_msg_hdr_t msg_header;
@@ -93,6 +122,7 @@ void period_100Hz(uint32_t count)
                {
                    LE.setAll(0);
                }
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
