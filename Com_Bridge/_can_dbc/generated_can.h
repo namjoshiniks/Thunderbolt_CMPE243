@@ -18,36 +18,49 @@ typedef struct {
 } dbc_mia_info_t;
 
 /// CAN message header structure
-typedef struct { 
+typedef struct {
     uint32_t mid; ///< Message ID of the message
     uint8_t  dlc; ///< Data length of the message
 } dbc_msg_hdr_t;
 
-static const dbc_msg_hdr_t GPS_CURRENT_LOCATION_HDR =             {  162, 8 };
 static const dbc_msg_hdr_t COM_BRIDGE_CHECK_POINT_HDR =           {  148, 8 };
 static const dbc_msg_hdr_t COM_BRIDGE_CLICKED_START_HDR =         {   84, 2 };
-// static const dbc_msg_hdr_t MASTER_DRIVING_CAR_HDR =               {  209, 8 };
-// static const dbc_msg_hdr_t SENSOR_SONARS_HDR =                    {  144, 5 };
-// static const dbc_msg_hdr_t MOTOR_HEARTBEAT_HDR =                  {  339, 2 };
-// static const dbc_msg_hdr_t MOTOR_CAR_SPEED_HDR =                  {  147, 8 };
-static const dbc_msg_hdr_t COM_BRIDGE_STOPALL_HDR =               {    4, 2 };
-// static const dbc_msg_hdr_t SENSOR_HEARTBEAT_HDR =                 {  336, 2 };
-// static const dbc_msg_hdr_t GPS_HEARTBEAT_HDR =                    {  338, 2 };
 static const dbc_msg_hdr_t COM_BRIDGE_HEARTBEAT_HDR =             {  340, 2 };
-// static const dbc_msg_hdr_t MASTER_ACKNOWLEDGEMENT_HDR =           {  281, 2 };
+static const dbc_msg_hdr_t COM_BRIDGE_STOPALL_HDR =               {    4, 2 };
 static const dbc_msg_hdr_t GPS_ACKNOWLEDGEMENT_HDR =              {  290, 2 };
-// static const dbc_msg_hdr_t GPS_MASTER_DATA_HDR =                  {  146, 6 };
+static const dbc_msg_hdr_t GPS_CURRENT_LOCATION_HDR =             {  162, 8 };
+// static const dbc_msg_hdr_t GPS_HEARTBEAT_HDR =                    {  338, 2 };
+// static const dbc_msg_hdr_t GPS_MASTER_DATA_HDR =                  {  146, 7 };
+static const dbc_msg_hdr_t GPS_COMPASS_HEADING_HDR =              {  300, 2 };
+// static const dbc_msg_hdr_t MASTER_ACKNOWLEDGEMENT_HDR =           {  281, 2 };
+static const dbc_msg_hdr_t MASTER_DRIVING_CAR_HDR =               {  209, 8 };
+static const dbc_msg_hdr_t MOTOR_CAR_SPEED_HDR =                  {  147, 4 };
+// static const dbc_msg_hdr_t MOTOR_HEARTBEAT_HDR =                  {  339, 2 };
+// static const dbc_msg_hdr_t SENSOR_HEARTBEAT_HDR =                 {  336, 2 };
+static const dbc_msg_hdr_t SENSOR_SONARS_HDR =                    {  144, 8 };
+
+/// Enumeration(s) for Message: 'MASTER_DRIVING_CAR' from 'MASTER'
+typedef enum {
+    DRIVE = 3,
+    REVERSE = 1,
+    STOP = 2,
+} MASTER_DRIVE_ENUM_E ;
+
+typedef enum {
+    RIGHT = 2,
+    FAR_LEFT = 5,
+    LEFT = 4,
+    FAR_RIGHT = 1,
+    CENTER = 3,
+} MASTER_STEER_ENUM_E ;
+
+typedef enum {
+    LOW = 1,
+    HIGH = 3,
+    MEDIUM = 2,
+} MASTER_SPEED_ENUM_E ;
 
 
-
-
-/// Message: GPS_CURRENT_LOCATION from 'GPS', DLC: 8 byte(s), MID: 162
-typedef struct {
-    float GPS_LATTITUDE_SIGNED;               ///< B29:0  Min: -90 Max: 90   Destination: COM_BRIDGE
-    float GPS_LONGITUDE_SIGNED;               ///< B59:30  Min: -180 Max: 180   Destination: COM_BRIDGE
-
-    dbc_mia_info_t mia_info;
-} GPS_CURRENT_LOCATION_t;
 
 /// @{ MUX'd message: COM_BRIDGE_CHECK_POINT
 
@@ -85,20 +98,20 @@ typedef struct {
 } COM_BRIDGE_CLICKED_START_t;
 
 
-/// Message: COM_BRIDGE_STOPALL from 'COM_BRIDGE', DLC: 2 byte(s), MID: 4
-typedef struct {
-    uint16_t COM_BRIDGE_STOPALL_UNSIGNED;     ///< B10:0   Destination: MASTER
-
-    // No dbc_mia_info_t for a message that we will send
-} COM_BRIDGE_STOPALL_t;
-
-
 /// Message: COM_BRIDGE_HEARTBEAT from 'COM_BRIDGE', DLC: 2 byte(s), MID: 340
 typedef struct {
     uint16_t COM_BRIDGE_HEARTBEAT_UNSIGNED;   ///< B10:0   Destination: MASTER
 
     // No dbc_mia_info_t for a message that we will send
 } COM_BRIDGE_HEARTBEAT_t;
+
+
+/// Message: COM_BRIDGE_STOPALL from 'COM_BRIDGE', DLC: 2 byte(s), MID: 4
+typedef struct {
+    uint16_t COM_BRIDGE_STOPALL_UNSIGNED;     ///< B10:0   Destination: MASTER
+
+    // No dbc_mia_info_t for a message that we will send
+} COM_BRIDGE_STOPALL_t;
 
 
 /// Message: GPS_ACKNOWLEDGEMENT from 'GPS', DLC: 2 byte(s), MID: 290
@@ -109,15 +122,68 @@ typedef struct {
 } GPS_ACKNOWLEDGEMENT_t;
 
 
+/// Message: GPS_CURRENT_LOCATION from 'GPS', DLC: 8 byte(s), MID: 162
+typedef struct {
+    float GPS_LATTITUDE_SIGNED;               ///< B29:0  Min: -90 Max: 90   Destination: COM_BRIDGE
+    float GPS_LONGITUDE_SIGNED;               ///< B59:30  Min: -180 Max: 180   Destination: COM_BRIDGE
+
+    dbc_mia_info_t mia_info;
+} GPS_CURRENT_LOCATION_t;
+
+
+/// Message: GPS_COMPASS_HEADING from 'GPS', DLC: 2 byte(s), MID: 300
+typedef struct {
+    float GEO_DATA_COMPASS_HEADING_UNSIGNED;  ///< B15:0  Min: 0 Max: 359   Destination: COM_BRIDGE
+
+    dbc_mia_info_t mia_info;
+} GPS_COMPASS_HEADING_t;
+
+
+/// Message: MASTER_DRIVING_CAR from 'MASTER', DLC: 8 byte(s), MID: 209
+typedef struct {
+    MASTER_DRIVE_ENUM_E MASTER_DRIVE_ENUM : 4; ///< B3:0   Destination: MOTOR,COM_BRIDGE
+    MASTER_STEER_ENUM_E MASTER_STEER_ENUM : 4; ///< B7:4   Destination: MOTOR,COM_BRIDGE
+    MASTER_SPEED_ENUM_E MASTER_SPEED_ENUM : 4; ///< B11:8   Destination: MOTOR,COM_BRIDGE
+
+    dbc_mia_info_t mia_info;
+} MASTER_DRIVING_CAR_t;
+
+
+/// Message: MOTOR_CAR_SPEED from 'MOTOR', DLC: 4 byte(s), MID: 147
+typedef struct {
+    uint8_t MOTOR_SPEED_DATA_UNSIGNED;        ///< B7:0   Destination: MASTER,COM_BRIDGE
+    uint8_t MOTOR_DISTANCE_FROM_START_POINT_UNSIGNED; ///< B15:8   Destination: MASTER,COM_BRIDGE
+
+    dbc_mia_info_t mia_info;
+} MOTOR_CAR_SPEED_t;
+
+
+/// Message: SENSOR_SONARS from 'SENSOR', DLC: 8 byte(s), MID: 144
+typedef struct {
+    uint16_t SENSOR_SONARS_LEFT_UNSIGNED;     ///< B15:0   Destination: MASTER,MOTOR,COM_BRIDGE
+    uint16_t SENSOR_SONARS_RIGHT_UNSIGNED;    ///< B31:16   Destination: MASTER,MOTOR,COM_BRIDGE
+    uint16_t SENSOR_SONARS_FRONT_UNSIGNED;    ///< B47:32   Destination: MASTER,MOTOR,COM_BRIDGE
+    uint16_t SENSOR_SONARS_BACK_UNSIGNED;     ///< B63:48   Destination: MASTER,MOTOR,COM_BRIDGE
+
+    dbc_mia_info_t mia_info;
+} SENSOR_SONARS_t;
+
+
 /// @{ These 'externs' need to be defined in a source file of your project
-extern const uint32_t                             GPS_CURRENT_LOCATION__MIA_MS;
-extern const GPS_CURRENT_LOCATION_t               GPS_CURRENT_LOCATION__MIA_MSG;
 extern const uint32_t                             GPS_ACKNOWLEDGEMENT__MIA_MS;
 extern const GPS_ACKNOWLEDGEMENT_t                GPS_ACKNOWLEDGEMENT__MIA_MSG;
+extern const uint32_t                             GPS_CURRENT_LOCATION__MIA_MS;
+extern const GPS_CURRENT_LOCATION_t               GPS_CURRENT_LOCATION__MIA_MSG;
+extern const uint32_t                             GPS_COMPASS_HEADING__MIA_MS;
+extern const GPS_COMPASS_HEADING_t                GPS_COMPASS_HEADING__MIA_MSG;
+extern const uint32_t                             MASTER_DRIVING_CAR__MIA_MS;
+extern const MASTER_DRIVING_CAR_t                 MASTER_DRIVING_CAR__MIA_MSG;
+extern const uint32_t                             MOTOR_CAR_SPEED__MIA_MS;
+extern const MOTOR_CAR_SPEED_t                    MOTOR_CAR_SPEED__MIA_MSG;
+extern const uint32_t                             SENSOR_SONARS__MIA_MS;
+extern const SENSOR_SONARS_t                      SENSOR_SONARS__MIA_MSG;
 /// @}
 
-
-/// Not generating code for dbc_encode_GPS_CURRENT_LOCATION() since the sender is GPS and we are COM_BRIDGE
 
 /// Encode COM_BRIDGE's 'COM_BRIDGE_CHECK_POINT' MUX(m0) message
 /// @returns the message header of this message
@@ -228,13 +294,29 @@ static inline bool dbc_encode_and_send_COM_BRIDGE_CLICKED_START(COM_BRIDGE_CLICK
 
 
 
-/// Not generating code for dbc_encode_MASTER_DRIVING_CAR() since the sender is MASTER and we are COM_BRIDGE
+/// Encode COM_BRIDGE's 'COM_BRIDGE_HEARTBEAT' message
+/// @returns the message header of this message
+static inline dbc_msg_hdr_t dbc_encode_COM_BRIDGE_HEARTBEAT(uint8_t bytes[8], COM_BRIDGE_HEARTBEAT_t *from)
+{
+    uint32_t raw;
+    bytes[0]=bytes[1]=bytes[2]=bytes[3]=bytes[4]=bytes[5]=bytes[6]=bytes[7]=0;
 
-/// Not generating code for dbc_encode_SENSOR_SONARS() since the sender is SENSOR and we are COM_BRIDGE
+    raw = ((uint32_t)(((from->COM_BRIDGE_HEARTBEAT_UNSIGNED)))) & 0x7ff;
+    bytes[0] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B0
+    bytes[1] |= (((uint8_t)(raw >> 8) & 0x07)); ///< 3 bit(s) starting from B8
 
-/// Not generating code for dbc_encode_MOTOR_HEARTBEAT() since the sender is MOTOR and we are COM_BRIDGE
+    return COM_BRIDGE_HEARTBEAT_HDR;
+}
 
-/// Not generating code for dbc_encode_MOTOR_CAR_SPEED() since the sender is MOTOR and we are COM_BRIDGE
+/// Encode and send for dbc_encode_COM_BRIDGE_HEARTBEAT() message
+static inline bool dbc_encode_and_send_COM_BRIDGE_HEARTBEAT(COM_BRIDGE_HEARTBEAT_t *from)
+{
+    uint8_t bytes[8];
+    const dbc_msg_hdr_t hdr = dbc_encode_COM_BRIDGE_HEARTBEAT(bytes, from);
+    return dbc_app_send_can_msg(hdr.mid, hdr.dlc, bytes);
+}
+
+
 
 /// Encode COM_BRIDGE's 'COM_BRIDGE_STOPALL' message
 /// @returns the message header of this message
@@ -260,39 +342,56 @@ static inline bool dbc_encode_and_send_COM_BRIDGE_STOPALL(COM_BRIDGE_STOPALL_t *
 
 
 
-/// Not generating code for dbc_encode_SENSOR_HEARTBEAT() since the sender is SENSOR and we are COM_BRIDGE
+/// Not generating code for dbc_encode_GPS_ACKNOWLEDGEMENT() since the sender is GPS and we are COM_BRIDGE
+
+/// Not generating code for dbc_encode_GPS_CURRENT_LOCATION() since the sender is GPS and we are COM_BRIDGE
 
 /// Not generating code for dbc_encode_GPS_HEARTBEAT() since the sender is GPS and we are COM_BRIDGE
 
-/// Encode COM_BRIDGE's 'COM_BRIDGE_HEARTBEAT' message
-/// @returns the message header of this message
-static inline dbc_msg_hdr_t dbc_encode_COM_BRIDGE_HEARTBEAT(uint8_t bytes[8], COM_BRIDGE_HEARTBEAT_t *from)
-{
-    uint32_t raw;
-    bytes[0]=bytes[1]=bytes[2]=bytes[3]=bytes[4]=bytes[5]=bytes[6]=bytes[7]=0;
+/// Not generating code for dbc_encode_GPS_MASTER_DATA() since the sender is GPS and we are COM_BRIDGE
 
-    raw = ((uint32_t)(((from->COM_BRIDGE_HEARTBEAT_UNSIGNED)))) & 0x7ff;
-    bytes[0] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B0
-    bytes[1] |= (((uint8_t)(raw >> 8) & 0x07)); ///< 3 bit(s) starting from B8
-
-    return COM_BRIDGE_HEARTBEAT_HDR;
-}
-
-/// Encode and send for dbc_encode_COM_BRIDGE_HEARTBEAT() message
-static inline bool dbc_encode_and_send_COM_BRIDGE_HEARTBEAT(COM_BRIDGE_HEARTBEAT_t *from)
-{
-    uint8_t bytes[8];
-    const dbc_msg_hdr_t hdr = dbc_encode_COM_BRIDGE_HEARTBEAT(bytes, from);
-    return dbc_app_send_can_msg(hdr.mid, hdr.dlc, bytes);
-}
-
-
+/// Not generating code for dbc_encode_GPS_COMPASS_HEADING() since the sender is GPS and we are COM_BRIDGE
 
 /// Not generating code for dbc_encode_MASTER_ACKNOWLEDGEMENT() since the sender is MASTER and we are COM_BRIDGE
 
-/// Not generating code for dbc_encode_GPS_ACKNOWLEDGEMENT() since the sender is GPS and we are COM_BRIDGE
+/// Not generating code for dbc_encode_MASTER_DRIVING_CAR() since the sender is MASTER and we are COM_BRIDGE
 
-/// Not generating code for dbc_encode_GPS_MASTER_DATA() since the sender is GPS and we are COM_BRIDGE
+/// Not generating code for dbc_encode_MOTOR_CAR_SPEED() since the sender is MOTOR and we are COM_BRIDGE
+
+/// Not generating code for dbc_encode_MOTOR_HEARTBEAT() since the sender is MOTOR and we are COM_BRIDGE
+
+/// Not generating code for dbc_encode_SENSOR_HEARTBEAT() since the sender is SENSOR and we are COM_BRIDGE
+
+/// Not generating code for dbc_encode_SENSOR_SONARS() since the sender is SENSOR and we are COM_BRIDGE
+
+/// Not generating code for dbc_decode_COM_BRIDGE_CHECK_POINT() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_COM_BRIDGE_CLICKED_START() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_COM_BRIDGE_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_COM_BRIDGE_STOPALL() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Decode GPS's 'GPS_ACKNOWLEDGEMENT' message
+/// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
+static inline bool dbc_decode_GPS_ACKNOWLEDGEMENT(GPS_ACKNOWLEDGEMENT_t *to, const uint8_t bytes[8], const dbc_msg_hdr_t *hdr)
+{
+    const bool success = true;
+    // If msg header is provided, check if the DLC and the MID match
+    if (NULL != hdr && (hdr->dlc != GPS_ACKNOWLEDGEMENT_HDR.dlc || hdr->mid != GPS_ACKNOWLEDGEMENT_HDR.mid)) {
+        return !success;
+    }
+
+    uint32_t raw;
+    raw  = ((uint32_t)((bytes[0]))); ///< 8 bit(s) from B0
+    raw |= ((uint32_t)((bytes[1]) & 0x07)) << 8; ///< 3 bit(s) from B8
+    to->GPS_ACKNOWLEDGEMENT_UNSIGNED = ((raw));
+
+    to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
+
+    return success;
+}
+
 
 /// Decode GPS's 'GPS_CURRENT_LOCATION' message
 /// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
@@ -323,42 +422,24 @@ static inline bool dbc_decode_GPS_CURRENT_LOCATION(GPS_CURRENT_LOCATION_t *to, c
 }
 
 
-/// Not generating code for dbc_decode_COM_BRIDGE_CHECK_POINT() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_COM_BRIDGE_CLICKED_START() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_MASTER_DRIVING_CAR() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_SENSOR_SONARS() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_MOTOR_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_MOTOR_CAR_SPEED() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_COM_BRIDGE_STOPALL() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_SENSOR_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
-
 /// Not generating code for dbc_decode_GPS_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
 
-/// Not generating code for dbc_decode_COM_BRIDGE_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
+/// Not generating code for dbc_decode_GPS_MASTER_DATA() since 'COM_BRIDGE' is not the recipient of any of the signals
 
-/// Not generating code for dbc_decode_MASTER_ACKNOWLEDGEMENT() since 'COM_BRIDGE' is not the recipient of any of the signals
-
-/// Decode GPS's 'GPS_ACKNOWLEDGEMENT' message
+/// Decode GPS's 'GPS_COMPASS_HEADING' message
 /// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
-static inline bool dbc_decode_GPS_ACKNOWLEDGEMENT(GPS_ACKNOWLEDGEMENT_t *to, const uint8_t bytes[8], const dbc_msg_hdr_t *hdr)
+static inline bool dbc_decode_GPS_COMPASS_HEADING(GPS_COMPASS_HEADING_t *to, const uint8_t bytes[8], const dbc_msg_hdr_t *hdr)
 {
     const bool success = true;
     // If msg header is provided, check if the DLC and the MID match
-    if (NULL != hdr && (hdr->dlc != GPS_ACKNOWLEDGEMENT_HDR.dlc || hdr->mid != GPS_ACKNOWLEDGEMENT_HDR.mid)) {
+    if (NULL != hdr && (hdr->dlc != GPS_COMPASS_HEADING_HDR.dlc || hdr->mid != GPS_COMPASS_HEADING_HDR.mid)) {
         return !success;
     }
 
     uint32_t raw;
     raw  = ((uint32_t)((bytes[0]))); ///< 8 bit(s) from B0
-    raw |= ((uint32_t)((bytes[1]) & 0x07)) << 8; ///< 3 bit(s) from B8
-    to->GPS_ACKNOWLEDGEMENT_UNSIGNED = ((raw));
+    raw |= ((uint32_t)((bytes[1]))) << 8; ///< 8 bit(s) from B8
+    to->GEO_DATA_COMPASS_HEADING_UNSIGNED = ((raw * 0.1));
 
     to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
 
@@ -366,7 +447,111 @@ static inline bool dbc_decode_GPS_ACKNOWLEDGEMENT(GPS_ACKNOWLEDGEMENT_t *to, con
 }
 
 
-/// Not generating code for dbc_decode_GPS_MASTER_DATA() since 'COM_BRIDGE' is not the recipient of any of the signals
+/// Not generating code for dbc_decode_MASTER_ACKNOWLEDGEMENT() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Decode MASTER's 'MASTER_DRIVING_CAR' message
+/// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
+static inline bool dbc_decode_MASTER_DRIVING_CAR(MASTER_DRIVING_CAR_t *to, const uint8_t bytes[8], const dbc_msg_hdr_t *hdr)
+{
+    const bool success = true;
+    // If msg header is provided, check if the DLC and the MID match
+    if (NULL != hdr && (hdr->dlc != MASTER_DRIVING_CAR_HDR.dlc || hdr->mid != MASTER_DRIVING_CAR_HDR.mid)) {
+        return !success;
+    }
+
+    uint32_t raw;
+    raw  = ((uint32_t)((bytes[0]) & 0x0f)); ///< 4 bit(s) from B0
+    to->MASTER_DRIVE_ENUM = (MASTER_DRIVE_ENUM_E)((raw));
+    raw  = ((uint32_t)((bytes[0] >> 4) & 0x0f)); ///< 4 bit(s) from B4
+    to->MASTER_STEER_ENUM = (MASTER_STEER_ENUM_E)((raw));
+    raw  = ((uint32_t)((bytes[1]) & 0x0f)); ///< 4 bit(s) from B8
+    to->MASTER_SPEED_ENUM = (MASTER_SPEED_ENUM_E)((raw));
+
+    to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
+
+    return success;
+}
+
+
+/// Decode MOTOR's 'MOTOR_CAR_SPEED' message
+/// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
+static inline bool dbc_decode_MOTOR_CAR_SPEED(MOTOR_CAR_SPEED_t *to, const uint8_t bytes[8], const dbc_msg_hdr_t *hdr)
+{
+    const bool success = true;
+    // If msg header is provided, check if the DLC and the MID match
+    if (NULL != hdr && (hdr->dlc != MOTOR_CAR_SPEED_HDR.dlc || hdr->mid != MOTOR_CAR_SPEED_HDR.mid)) {
+        return !success;
+    }
+
+    uint32_t raw;
+    raw  = ((uint32_t)((bytes[0]))); ///< 8 bit(s) from B0
+    to->MOTOR_SPEED_DATA_UNSIGNED = ((raw));
+    raw  = ((uint32_t)((bytes[1]))); ///< 8 bit(s) from B8
+    to->MOTOR_DISTANCE_FROM_START_POINT_UNSIGNED = ((raw));
+
+    to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
+
+    return success;
+}
+
+
+/// Not generating code for dbc_decode_MOTOR_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_SENSOR_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Decode SENSOR's 'SENSOR_SONARS' message
+/// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
+static inline bool dbc_decode_SENSOR_SONARS(SENSOR_SONARS_t *to, const uint8_t bytes[8], const dbc_msg_hdr_t *hdr)
+{
+    const bool success = true;
+    // If msg header is provided, check if the DLC and the MID match
+    if (NULL != hdr && (hdr->dlc != SENSOR_SONARS_HDR.dlc || hdr->mid != SENSOR_SONARS_HDR.mid)) {
+        return !success;
+    }
+
+    uint32_t raw;
+    raw  = ((uint32_t)((bytes[0]))); ///< 8 bit(s) from B0
+    raw |= ((uint32_t)((bytes[1]))) << 8; ///< 8 bit(s) from B8
+    to->SENSOR_SONARS_LEFT_UNSIGNED = ((raw));
+    raw  = ((uint32_t)((bytes[2]))); ///< 8 bit(s) from B16
+    raw |= ((uint32_t)((bytes[3]))) << 8; ///< 8 bit(s) from B24
+    to->SENSOR_SONARS_RIGHT_UNSIGNED = ((raw));
+    raw  = ((uint32_t)((bytes[4]))); ///< 8 bit(s) from B32
+    raw |= ((uint32_t)((bytes[5]))) << 8; ///< 8 bit(s) from B40
+    to->SENSOR_SONARS_FRONT_UNSIGNED = ((raw));
+    raw  = ((uint32_t)((bytes[6]))); ///< 8 bit(s) from B48
+    raw |= ((uint32_t)((bytes[7]))) << 8; ///< 8 bit(s) from B56
+    to->SENSOR_SONARS_BACK_UNSIGNED = ((raw));
+
+    to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
+
+    return success;
+}
+
+
+/// Handle the MIA for GPS's GPS_ACKNOWLEDGEMENT message
+/// @param   time_incr_ms  The time to increment the MIA counter with
+/// @returns true if the MIA just occurred
+/// @post    If the MIA counter reaches the MIA threshold, MIA struct will be copied to *msg
+static inline bool dbc_handle_mia_GPS_ACKNOWLEDGEMENT(GPS_ACKNOWLEDGEMENT_t *msg, uint32_t time_incr_ms)
+{
+    bool mia_occurred = false;
+    const dbc_mia_info_t old_mia = msg->mia_info;
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= GPS_ACKNOWLEDGEMENT__MIA_MS);
+
+    if (!msg->mia_info.is_mia) { // Not MIA yet, so keep incrementing the MIA counter
+        msg->mia_info.mia_counter_ms += time_incr_ms;
+    }
+    else if(!old_mia.is_mia)   { // Previously not MIA, but it is MIA now
+        // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
+        *msg = GPS_ACKNOWLEDGEMENT__MIA_MSG;
+        msg->mia_info.mia_counter_ms = GPS_ACKNOWLEDGEMENT__MIA_MS;
+        msg->mia_info.is_mia = true;
+        mia_occurred = true;
+    }
+
+    return mia_occurred;
+}
 
 /// Handle the MIA for GPS's GPS_CURRENT_LOCATION message
 /// @param   time_incr_ms  The time to increment the MIA counter with
@@ -392,23 +577,95 @@ static inline bool dbc_handle_mia_GPS_CURRENT_LOCATION(GPS_CURRENT_LOCATION_t *m
     return mia_occurred;
 }
 
-/// Handle the MIA for GPS's GPS_ACKNOWLEDGEMENT message
+/// Handle the MIA for GPS's GPS_COMPASS_HEADING message
 /// @param   time_incr_ms  The time to increment the MIA counter with
 /// @returns true if the MIA just occurred
 /// @post    If the MIA counter reaches the MIA threshold, MIA struct will be copied to *msg
-static inline bool dbc_handle_mia_GPS_ACKNOWLEDGEMENT(GPS_ACKNOWLEDGEMENT_t *msg, uint32_t time_incr_ms)
+static inline bool dbc_handle_mia_GPS_COMPASS_HEADING(GPS_COMPASS_HEADING_t *msg, uint32_t time_incr_ms)
 {
     bool mia_occurred = false;
     const dbc_mia_info_t old_mia = msg->mia_info;
-    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= GPS_ACKNOWLEDGEMENT__MIA_MS);
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= GPS_COMPASS_HEADING__MIA_MS);
 
     if (!msg->mia_info.is_mia) { // Not MIA yet, so keep incrementing the MIA counter
         msg->mia_info.mia_counter_ms += time_incr_ms;
     }
     else if(!old_mia.is_mia)   { // Previously not MIA, but it is MIA now
         // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
-        *msg = GPS_ACKNOWLEDGEMENT__MIA_MSG;
-        msg->mia_info.mia_counter_ms = GPS_ACKNOWLEDGEMENT__MIA_MS;
+        *msg = GPS_COMPASS_HEADING__MIA_MSG;
+        msg->mia_info.mia_counter_ms = GPS_COMPASS_HEADING__MIA_MS;
+        msg->mia_info.is_mia = true;
+        mia_occurred = true;
+    }
+
+    return mia_occurred;
+}
+
+/// Handle the MIA for MASTER's MASTER_DRIVING_CAR message
+/// @param   time_incr_ms  The time to increment the MIA counter with
+/// @returns true if the MIA just occurred
+/// @post    If the MIA counter reaches the MIA threshold, MIA struct will be copied to *msg
+static inline bool dbc_handle_mia_MASTER_DRIVING_CAR(MASTER_DRIVING_CAR_t *msg, uint32_t time_incr_ms)
+{
+    bool mia_occurred = false;
+    const dbc_mia_info_t old_mia = msg->mia_info;
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= MASTER_DRIVING_CAR__MIA_MS);
+
+    if (!msg->mia_info.is_mia) { // Not MIA yet, so keep incrementing the MIA counter
+        msg->mia_info.mia_counter_ms += time_incr_ms;
+    }
+    else if(!old_mia.is_mia)   { // Previously not MIA, but it is MIA now
+        // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
+        *msg = MASTER_DRIVING_CAR__MIA_MSG;
+        msg->mia_info.mia_counter_ms = MASTER_DRIVING_CAR__MIA_MS;
+        msg->mia_info.is_mia = true;
+        mia_occurred = true;
+    }
+
+    return mia_occurred;
+}
+
+/// Handle the MIA for MOTOR's MOTOR_CAR_SPEED message
+/// @param   time_incr_ms  The time to increment the MIA counter with
+/// @returns true if the MIA just occurred
+/// @post    If the MIA counter reaches the MIA threshold, MIA struct will be copied to *msg
+static inline bool dbc_handle_mia_MOTOR_CAR_SPEED(MOTOR_CAR_SPEED_t *msg, uint32_t time_incr_ms)
+{
+    bool mia_occurred = false;
+    const dbc_mia_info_t old_mia = msg->mia_info;
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= MOTOR_CAR_SPEED__MIA_MS);
+
+    if (!msg->mia_info.is_mia) { // Not MIA yet, so keep incrementing the MIA counter
+        msg->mia_info.mia_counter_ms += time_incr_ms;
+    }
+    else if(!old_mia.is_mia)   { // Previously not MIA, but it is MIA now
+        // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
+        *msg = MOTOR_CAR_SPEED__MIA_MSG;
+        msg->mia_info.mia_counter_ms = MOTOR_CAR_SPEED__MIA_MS;
+        msg->mia_info.is_mia = true;
+        mia_occurred = true;
+    }
+
+    return mia_occurred;
+}
+
+/// Handle the MIA for SENSOR's SENSOR_SONARS message
+/// @param   time_incr_ms  The time to increment the MIA counter with
+/// @returns true if the MIA just occurred
+/// @post    If the MIA counter reaches the MIA threshold, MIA struct will be copied to *msg
+static inline bool dbc_handle_mia_SENSOR_SONARS(SENSOR_SONARS_t *msg, uint32_t time_incr_ms)
+{
+    bool mia_occurred = false;
+    const dbc_mia_info_t old_mia = msg->mia_info;
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= SENSOR_SONARS__MIA_MS);
+
+    if (!msg->mia_info.is_mia) { // Not MIA yet, so keep incrementing the MIA counter
+        msg->mia_info.mia_counter_ms += time_incr_ms;
+    }
+    else if(!old_mia.is_mia)   { // Previously not MIA, but it is MIA now
+        // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
+        *msg = SENSOR_SONARS__MIA_MSG;
+        msg->mia_info.mia_counter_ms = SENSOR_SONARS__MIA_MS;
         msg->mia_info.is_mia = true;
         mia_occurred = true;
     }
