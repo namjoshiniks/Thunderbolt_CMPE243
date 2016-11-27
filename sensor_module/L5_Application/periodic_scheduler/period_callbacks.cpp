@@ -32,8 +32,7 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include <stdio.h>
-#include "can.h"
-#include "_can_dbc/generated_can.h"
+//#include "_can_dbc/generated_can.h"
 #include "sensor.hpp"
 #include "ssp1.h"
 #include "eint.h"
@@ -70,9 +69,8 @@ bool period_init(void)
     ssp1_init();
 
 	//CAN initialization
-	CAN_init(can1, 100, 4, 4, NULL, NULL);
-	CAN_reset_bus(can1);
-	CAN_bypass_filter_accept_all_msgs();
+    initializeCAN();
+
 	return true; // Must return true upon success
 }
 
@@ -92,12 +90,7 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 	//Check CAN bus
-	if(CAN_is_bus_off(can1))
-	{
-		CAN_reset_bus(can1);
-		CAN_bypass_filter_accept_all_msgs();
-		LE.on(4);
-	}
+	if(checkCANbus());
 	else
 	{
 		LE.off(4);
@@ -127,14 +120,16 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
 	static SENSOR_SONARS_t sonar_data;
-	sonar_data.SENSOR_SONARS_LEFT_UNSIGNED = leftDistance;
-	sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED = backDistance; //change back after checking wiring
-	sonar_data.SENSOR_SONARS_FRONT_UNSIGNED = frontDistance;
-	sonar_data.SENSOR_SONARS_BACK_UNSIGNED = backDistance;
+//	sonar_data.SENSOR_SONARS_LEFT_UNSIGNED = leftDistance;
+//	sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED = rightDistance; //change back after checking wiring
+//	sonar_data.SENSOR_SONARS_FRONT_UNSIGNED = frontDistance;
+//	sonar_data.SENSOR_SONARS_BACK_UNSIGNED = backDistance;
+	updateCANsonar(&sonar_data);
 	//can_msg_t can_msg;
 	can_msg_t can_msg = {0};
 
 	// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
+
 	dbc_msg_hdr_t msg_hdr = dbc_encode_SENSOR_SONARS(can_msg.data.bytes, &sonar_data);
 	can_msg.msg_id = msg_hdr.mid;
 	can_msg.frame_fields.data_len = msg_hdr.dlc;

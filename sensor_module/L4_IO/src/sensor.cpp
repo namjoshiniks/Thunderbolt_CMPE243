@@ -25,6 +25,36 @@ int backDistance = 0;
 int leftDistance = 0;
 int rightDistance = 0;
 
+void initializeCAN()
+{
+	CAN_init(can1, 100, 4, 4, NULL, NULL);
+	CAN_reset_bus(can1);
+	CAN_bypass_filter_accept_all_msgs();
+}
+
+bool checkCANbus()
+{
+	//check CAN bus
+	if(CAN_is_bus_off(can1))
+	{
+		CAN_reset_bus(can1);
+		LE.on(4);
+		return true;
+	}
+	return false;
+}
+
+void updateCANsonar(SENSOR_SONARS_t *CAN_sensor)
+{
+	SENSOR_SONARS_t sensor_data;
+	sensor_data.SENSOR_SONARS_LEFT_UNSIGNED = leftDistance;
+	sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED = rightDistance;
+	sensor_data.SENSOR_SONARS_FRONT_UNSIGNED = frontDistance;
+	sensor_data.SENSOR_SONARS_BACK_UNSIGNED = backDistance;
+	*CAN_sensor = sensor_data;
+}
+
+
 bool initializeRX_1()
 {
     static GPIO *Sensor_Input = new GPIO(P0_30);
@@ -158,7 +188,7 @@ void sendLEDmessage(int distance1, int distance2, int distance3)
 
 void enableHeadlights()
 {
-	static GPIO *headlights = new GPIO(P0_26);
+	static GPIO *headlights = new GPIO(P1_19);
 		headlights->setAsOutput();
 		if(LS.getPercentValue() <= 10)
 		{

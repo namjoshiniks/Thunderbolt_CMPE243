@@ -13,6 +13,9 @@
 #include "ssp1.h"
 #include "io.hpp"
 #include <stdio.h>
+#include "can.h"
+#include "_can_dbc/generated_can.h"
+
 
 extern int leftDistance;
 extern int rightDistance;
@@ -30,6 +33,12 @@ extern int leftStart;
 extern int leftStop;
 extern int rightStart;
 extern int rightStop;
+
+void initializeCAN();
+
+bool checkCANbus();
+
+void updateCANsonar(SENSOR_SONARS_t *CAN_sensor);
 
 bool initializeRX_1();
 bool initializeRX_2();
