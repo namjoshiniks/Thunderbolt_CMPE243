@@ -10,26 +10,14 @@
 #include "utilities.h"
 //#include "L5_Application/periodic_scheduler/periodic_callback.h"
 #include <string>
+#include <string.h>
 using namespace std;
 
-//Uart2 &u2 = Uart2::getInstance();
-
-//char lcd_init;
-//char lcd_clear;
-//char cursor_right;
-//char cursor_line_two;
-//char cursor_line_one;
-//char set_cursor;
-//string x;
-//int length;
-//
-//string forward_string;
-//string left_string;
-//string right_string;
-
-void print_forward(void);
-void print_left(void);
-void print_right(void);
+void scroll(string data);
+void processLineOne(void);
+void clearLineTwo(void);
+void processLineTwo(int leftVal, int frontVal, int rightVal, int backVal);
+void processLineThree(char *direction, int speed);
 void setupLcd(void);
 void refreshLcd(void);
 

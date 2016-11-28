@@ -8,6 +8,15 @@
 #include "utilities.h"
 #include "eint.h"
 
+// lcd
+int front_data = 30;
+int left_data = 40;
+int right_data = 50;
+int back_data = 60;
+char dir_data[8] = "Forward";
+int rpm_data = 250;
+int myCount;
+
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
@@ -54,6 +63,7 @@ bool period_init(void)
     rcv_car.MASTER_STEER_ENUM =CENTER;
     //lcd setup
     setupLcd();
+
     return true;
 }
 
@@ -64,7 +74,12 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
-    if(CAN_is_bus_off(can1))
+	//lcd handle
+    //refreshLcd();
+	processLineTwo(left_data, front_data, right_data, back_data);
+	processLineThree(dir_data, rpm_data);
+
+	if(CAN_is_bus_off(can1))
     {
         CAN_reset_bus(can1);
     }
@@ -74,11 +89,9 @@ void period_1Hz(uint32_t count)
     msg.data.qword = msg_hdr.mid;
     CAN_tx(can1, &msg, 0);
 }
+
 void period_10Hz(uint32_t count)
 {
-	//lcd handle
-    refreshLcd();
-
 	 //RPM speed Logic
 	 if(count<12)
    {
