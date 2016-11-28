@@ -158,6 +158,18 @@ void handle_motors_from_sensor_data()
 				default_motor_state();
 			}
 		}
+		else if (sensor_data.SENSOR_SONARS_LEFT_UNSIGNED > 35)
+		{
+	        motor_drive.MASTER_DRIVE_ENUM= DRIVE;
+	        motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+	        motor_drive.MASTER_STEER_ENUM = LEFT;
+	        LD.setNumber(2);
+		}
+		else
+		{
+            //STOP
+			default_motor_state();
+		}
 	}
 	else if((sensor_data.SENSOR_SONARS_FRONT_UNSIGNED > 20) &&  (sensor_data.SENSOR_SONARS_FRONT_UNSIGNED < 50))
 	{
@@ -203,7 +215,7 @@ void handle_motors_from_sensor_data()
 			}
 			else
 			{
-	            //STOP
+                	        //STOP
 				default_motor_state();
 			}
 		}
