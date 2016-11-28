@@ -1,4 +1,5 @@
 #include "Motor_Servo_Control.h"
+#include "lcd.h"
 #include "periodic_callback.h"
 #include <stdint.h>
 #include "io.hpp"
@@ -6,6 +7,7 @@
 #include <stdio.h>
 #include "utilities.h"
 #include "eint.h"
+
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
@@ -50,7 +52,8 @@ bool period_init(void)
     rcv_car.MASTER_DRIVE_ENUM =STOP;
     rcv_car.MASTER_SPEED_ENUM =MEDIUM;
     rcv_car.MASTER_STEER_ENUM =CENTER;
-
+    //lcd setup
+    setupLcd();
     return true;
 }
 
@@ -73,6 +76,9 @@ void period_1Hz(uint32_t count)
 }
 void period_10Hz(uint32_t count)
 {
+	//lcd handle
+    refreshLcd();
+
 	 //RPM speed Logic
 	 if(count<12)
    {
