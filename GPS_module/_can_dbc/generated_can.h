@@ -23,31 +23,23 @@ typedef struct {
     uint8_t  dlc; ///< Data length of the message
 } dbc_msg_hdr_t; 
 
-static const dbc_msg_hdr_t GPS_CURRENT_LOCATION_HDR =             {  162, 8 };
 static const dbc_msg_hdr_t COM_BRIDGE_CHECK_POINT_HDR =           {  148, 8 };
 static const dbc_msg_hdr_t COM_BRIDGE_CLICKED_START_HDR =         {   84, 2 };
-// static const dbc_msg_hdr_t MASTER_DRIVING_CAR_HDR =               {  209, 8 };
-// static const dbc_msg_hdr_t SENSOR_SONARS_HDR =                    {  144, 5 };
-// static const dbc_msg_hdr_t MOTOR_HEARTBEAT_HDR =                  {  339, 2 };
-// static const dbc_msg_hdr_t MOTOR_CAR_SPEED_HDR =                  {  147, 8 };
-// static const dbc_msg_hdr_t COM_BRIDGE_STOPALL_HDR =               {    4, 2 };
-// static const dbc_msg_hdr_t SENSOR_HEARTBEAT_HDR =                 {  336, 2 };
-static const dbc_msg_hdr_t GPS_HEARTBEAT_HDR =                    {  338, 2 };
 // static const dbc_msg_hdr_t COM_BRIDGE_HEARTBEAT_HDR =             {  340, 2 };
-static const dbc_msg_hdr_t MASTER_ACKNOWLEDGEMENT_HDR =           {  281, 2 };
+// static const dbc_msg_hdr_t COM_BRIDGE_STOPALL_HDR =               {    4, 2 };
 static const dbc_msg_hdr_t GPS_ACKNOWLEDGEMENT_HDR =              {  290, 2 };
-static const dbc_msg_hdr_t GPS_MASTER_DATA_HDR =                  {  146, 6 };
+static const dbc_msg_hdr_t GPS_CURRENT_LOCATION_HDR =             {  162, 8 };
+static const dbc_msg_hdr_t GPS_HEARTBEAT_HDR =                    {  338, 2 };
+static const dbc_msg_hdr_t GPS_MASTER_DATA_HDR =                  {  146, 7 };
+static const dbc_msg_hdr_t GPS_COMPASS_HEADING_HDR =              {  300, 2 };
+static const dbc_msg_hdr_t MASTER_ACKNOWLEDGEMENT_HDR =           {  281, 2 };
+// static const dbc_msg_hdr_t MASTER_DRIVING_CAR_HDR =               {  209, 8 };
+// static const dbc_msg_hdr_t MOTOR_CAR_SPEED_HDR =                  {  147, 4 };
+// static const dbc_msg_hdr_t MOTOR_HEARTBEAT_HDR =                  {  339, 2 };
+// static const dbc_msg_hdr_t SENSOR_HEARTBEAT_HDR =                 {  336, 2 };
+// static const dbc_msg_hdr_t SENSOR_SONARS_HDR =                    {  144, 8 };
 
 
-
-
-/// Message: GPS_CURRENT_LOCATION from 'GPS', DLC: 8 byte(s), MID: 162
-typedef struct {
-    float GPS_LATTITUDE_SIGNED;               ///< B29:0  Min: -90 Max: 90   Destination: COM_BRIDGE
-    float GPS_LONGITUDE_SIGNED;               ///< B59:30  Min: -180 Max: 180   Destination: COM_BRIDGE
-
-    // No dbc_mia_info_t for a message that we will send
-} GPS_CURRENT_LOCATION_t;
 
 /// @{ MUX'd message: COM_BRIDGE_CHECK_POINT
 
@@ -85,22 +77,6 @@ typedef struct {
 } COM_BRIDGE_CLICKED_START_t;
 
 
-/// Message: GPS_HEARTBEAT from 'GPS', DLC: 2 byte(s), MID: 338
-typedef struct {
-    uint16_t GPS_HEARTBEAT_UNSIGNED;          ///< B10:0   Destination: MASTER
-
-    // No dbc_mia_info_t for a message that we will send
-} GPS_HEARTBEAT_t;
-
-
-/// Message: MASTER_ACKNOWLEDGEMENT from 'MASTER', DLC: 2 byte(s), MID: 281
-typedef struct {
-    uint16_t ACKNOWLEDGEMENT_DATA_REACHED_UNSIGNED; ///< B10:0   Destination: GPS
-
-    dbc_mia_info_t mia_info;
-} MASTER_ACKNOWLEDGEMENT_t;
-
-
 /// Message: GPS_ACKNOWLEDGEMENT from 'GPS', DLC: 2 byte(s), MID: 290
 typedef struct {
     uint16_t GPS_ACKNOWLEDGEMENT_UNSIGNED;    ///< B10:0   Destination: COM_BRIDGE
@@ -109,15 +85,48 @@ typedef struct {
 } GPS_ACKNOWLEDGEMENT_t;
 
 
-/// Message: GPS_MASTER_DATA from 'GPS', DLC: 6 byte(s), MID: 146
+/// Message: GPS_CURRENT_LOCATION from 'GPS', DLC: 8 byte(s), MID: 162
 typedef struct {
-    float GEO_DATA_TURNANGLE_SIGNED;          ///< B7:0   Destination: MASTER
-    uint8_t GEO_DATA_ISFINAL_SIGNED : 1;      ///< B15:15   Destination: MASTER
-    float GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED; ///< B31:16   Destination: MASTER
-    float GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED; ///< B47:32   Destination: MASTER
+    float GPS_LATTITUDE_SIGNED;               ///< B29:0  Min: -90 Max: 90   Destination: COM_BRIDGE
+    float GPS_LONGITUDE_SIGNED;               ///< B59:30  Min: -180 Max: 180   Destination: COM_BRIDGE
+
+    // No dbc_mia_info_t for a message that we will send
+} GPS_CURRENT_LOCATION_t;
+
+
+/// Message: GPS_HEARTBEAT from 'GPS', DLC: 2 byte(s), MID: 338
+typedef struct {
+    uint16_t GPS_HEARTBEAT_UNSIGNED;          ///< B10:0   Destination: MASTER
+
+    // No dbc_mia_info_t for a message that we will send
+} GPS_HEARTBEAT_t;
+
+
+/// Message: GPS_MASTER_DATA from 'GPS', DLC: 7 byte(s), MID: 146
+typedef struct {
+    float GEO_DATA_TURNANGLE_SIGNED;          ///< B15:0  Min: -180 Max: 180   Destination: MASTER,MOTOR
+    uint8_t GEO_DATA_ISFINAL_SIGNED : 1;      ///< B16:16   Destination: MASTER,MOTOR
+    float GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED; ///< B32:17   Destination: MASTER,MOTOR
+    float GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED; ///< B48:33   Destination: MASTER,MOTOR
 
     // No dbc_mia_info_t for a message that we will send
 } GPS_MASTER_DATA_t;
+
+
+/// Message: GPS_COMPASS_HEADING from 'GPS', DLC: 2 byte(s), MID: 300
+typedef struct {
+    float GEO_DATA_COMPASS_HEADING_UNSIGNED;  ///< B15:0  Min: 0 Max: 359   Destination: COM_BRIDGE
+
+    // No dbc_mia_info_t for a message that we will send
+} GPS_COMPASS_HEADING_t;
+
+
+/// Message: MASTER_ACKNOWLEDGEMENT from 'MASTER', DLC: 2 byte(s), MID: 281
+typedef struct {
+    uint16_t ACKNOWLEDGEMENT_DATA_REACHED_UNSIGNED; ///< B10:0   Destination: GPS
+
+    dbc_mia_info_t mia_info;
+} MASTER_ACKNOWLEDGEMENT_t;
 
 
 /// @{ These 'externs' need to be defined in a source file of your project
@@ -130,6 +139,38 @@ extern const COM_BRIDGE_CLICKED_START_t           COM_BRIDGE_CLICKED_START__MIA_
 extern const uint32_t                             MASTER_ACKNOWLEDGEMENT__MIA_MS;
 extern const MASTER_ACKNOWLEDGEMENT_t             MASTER_ACKNOWLEDGEMENT__MIA_MSG;
 /// @}
+
+
+/// Not generating code for dbc_encode_COM_BRIDGE_CHECK_POINT() since the sender is COM_BRIDGE and we are GPS
+
+/// Not generating code for dbc_encode_COM_BRIDGE_CLICKED_START() since the sender is COM_BRIDGE and we are GPS
+
+/// Not generating code for dbc_encode_COM_BRIDGE_HEARTBEAT() since the sender is COM_BRIDGE and we are GPS
+
+/// Not generating code for dbc_encode_COM_BRIDGE_STOPALL() since the sender is COM_BRIDGE and we are GPS
+
+/// Encode GPS's 'GPS_ACKNOWLEDGEMENT' message
+/// @returns the message header of this message
+static inline dbc_msg_hdr_t dbc_encode_GPS_ACKNOWLEDGEMENT(uint8_t bytes[8], GPS_ACKNOWLEDGEMENT_t *from)
+{
+    uint32_t raw;
+    bytes[0]=bytes[1]=bytes[2]=bytes[3]=bytes[4]=bytes[5]=bytes[6]=bytes[7]=0;
+
+    raw = ((uint32_t)(((from->GPS_ACKNOWLEDGEMENT_UNSIGNED)))) & 0x7ff;
+    bytes[0] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B0
+    bytes[1] |= (((uint8_t)(raw >> 8) & 0x07)); ///< 3 bit(s) starting from B8
+
+    return GPS_ACKNOWLEDGEMENT_HDR;
+}
+
+/// Encode and send for dbc_encode_GPS_ACKNOWLEDGEMENT() message
+static inline bool dbc_encode_and_send_GPS_ACKNOWLEDGEMENT(GPS_ACKNOWLEDGEMENT_t *from)
+{
+    uint8_t bytes[8];
+    const dbc_msg_hdr_t hdr = dbc_encode_GPS_ACKNOWLEDGEMENT(bytes, from);
+    return dbc_app_send_can_msg(hdr.mid, hdr.dlc, bytes);
+}
+
 
 
 /// Encode GPS's 'GPS_CURRENT_LOCATION' message
@@ -169,22 +210,6 @@ static inline bool dbc_encode_and_send_GPS_CURRENT_LOCATION(GPS_CURRENT_LOCATION
 
 
 
-/// Not generating code for dbc_encode_COM_BRIDGE_CHECK_POINT() since the sender is COM_BRIDGE and we are GPS
-
-/// Not generating code for dbc_encode_COM_BRIDGE_CLICKED_START() since the sender is COM_BRIDGE and we are GPS
-
-/// Not generating code for dbc_encode_MASTER_DRIVING_CAR() since the sender is MASTER and we are GPS
-
-/// Not generating code for dbc_encode_SENSOR_SONARS() since the sender is SENSOR and we are GPS
-
-/// Not generating code for dbc_encode_MOTOR_HEARTBEAT() since the sender is MOTOR and we are GPS
-
-/// Not generating code for dbc_encode_MOTOR_CAR_SPEED() since the sender is MOTOR and we are GPS
-
-/// Not generating code for dbc_encode_COM_BRIDGE_STOPALL() since the sender is COM_BRIDGE and we are GPS
-
-/// Not generating code for dbc_encode_SENSOR_HEARTBEAT() since the sender is SENSOR and we are GPS
-
 /// Encode GPS's 'GPS_HEARTBEAT' message
 /// @returns the message header of this message
 static inline dbc_msg_hdr_t dbc_encode_GPS_HEARTBEAT(uint8_t bytes[8], GPS_HEARTBEAT_t *from)
@@ -209,34 +234,6 @@ static inline bool dbc_encode_and_send_GPS_HEARTBEAT(GPS_HEARTBEAT_t *from)
 
 
 
-/// Not generating code for dbc_encode_COM_BRIDGE_HEARTBEAT() since the sender is COM_BRIDGE and we are GPS
-
-/// Not generating code for dbc_encode_MASTER_ACKNOWLEDGEMENT() since the sender is MASTER and we are GPS
-
-/// Encode GPS's 'GPS_ACKNOWLEDGEMENT' message
-/// @returns the message header of this message
-static inline dbc_msg_hdr_t dbc_encode_GPS_ACKNOWLEDGEMENT(uint8_t bytes[8], GPS_ACKNOWLEDGEMENT_t *from)
-{
-    uint32_t raw;
-    bytes[0]=bytes[1]=bytes[2]=bytes[3]=bytes[4]=bytes[5]=bytes[6]=bytes[7]=0;
-
-    raw = ((uint32_t)(((from->GPS_ACKNOWLEDGEMENT_UNSIGNED)))) & 0x7ff;
-    bytes[0] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B0
-    bytes[1] |= (((uint8_t)(raw >> 8) & 0x07)); ///< 3 bit(s) starting from B8
-
-    return GPS_ACKNOWLEDGEMENT_HDR;
-}
-
-/// Encode and send for dbc_encode_GPS_ACKNOWLEDGEMENT() message
-static inline bool dbc_encode_and_send_GPS_ACKNOWLEDGEMENT(GPS_ACKNOWLEDGEMENT_t *from)
-{
-    uint8_t bytes[8];
-    const dbc_msg_hdr_t hdr = dbc_encode_GPS_ACKNOWLEDGEMENT(bytes, from);
-    return dbc_app_send_can_msg(hdr.mid, hdr.dlc, bytes);
-}
-
-
-
 /// Encode GPS's 'GPS_MASTER_DATA' message
 /// @returns the message header of this message
 static inline dbc_msg_hdr_t dbc_encode_GPS_MASTER_DATA(uint8_t bytes[8], GPS_MASTER_DATA_t *from)
@@ -244,19 +241,24 @@ static inline dbc_msg_hdr_t dbc_encode_GPS_MASTER_DATA(uint8_t bytes[8], GPS_MAS
     uint32_t raw;
     bytes[0]=bytes[1]=bytes[2]=bytes[3]=bytes[4]=bytes[5]=bytes[6]=bytes[7]=0;
 
-    raw = ((uint32_t)(((from->GEO_DATA_TURNANGLE_SIGNED) / 1e-06) + 0.5)) & 0xff;
+    if(from->GEO_DATA_TURNANGLE_SIGNED < -180) { from->GEO_DATA_TURNANGLE_SIGNED = -180; } // Min value: -180
+    if(from->GEO_DATA_TURNANGLE_SIGNED > 180) { from->GEO_DATA_TURNANGLE_SIGNED = 180; } // Max value: 180
+    raw = ((uint32_t)(((from->GEO_DATA_TURNANGLE_SIGNED - (-180)) / 0.1) + 0.5)) & 0xffff;
     bytes[0] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B0
+    bytes[1] |= (((uint8_t)(raw >> 8) & 0xff)); ///< 8 bit(s) starting from B8
 
     raw = ((uint32_t)(((from->GEO_DATA_ISFINAL_SIGNED)))) & 0x01;
-    bytes[1] |= (((uint8_t)(raw) & 0x01) << 7); ///< 1 bit(s) starting from B15
+    bytes[2] |= (((uint8_t)(raw) & 0x01)); ///< 1 bit(s) starting from B16
 
-    raw = ((uint32_t)(((from->GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED) / 1e-06) + 0.5)) & 0xffff;
-    bytes[2] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B16
-    bytes[3] |= (((uint8_t)(raw >> 8) & 0xff)); ///< 8 bit(s) starting from B24
+    raw = ((uint32_t)(((from->GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED) / 0.1) + 0.5)) & 0xffff;
+    bytes[2] |= (((uint8_t)(raw) & 0x7f) << 1); ///< 7 bit(s) starting from B17
+    bytes[3] |= (((uint8_t)(raw >> 7) & 0xff)); ///< 8 bit(s) starting from B24
+    bytes[4] |= (((uint8_t)(raw >> 15) & 0x01)); ///< 1 bit(s) starting from B32
 
-    raw = ((uint32_t)(((from->GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED) / 1e-06) + 0.5)) & 0xffff;
-    bytes[4] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B32
-    bytes[5] |= (((uint8_t)(raw >> 8) & 0xff)); ///< 8 bit(s) starting from B40
+    raw = ((uint32_t)(((from->GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED) / 0.01) + 0.5)) & 0xffff;
+    bytes[4] |= (((uint8_t)(raw) & 0x7f) << 1); ///< 7 bit(s) starting from B33
+    bytes[5] |= (((uint8_t)(raw >> 7) & 0xff)); ///< 8 bit(s) starting from B40
+    bytes[6] |= (((uint8_t)(raw >> 15) & 0x01)); ///< 1 bit(s) starting from B48
 
     return GPS_MASTER_DATA_HDR;
 }
@@ -271,7 +273,43 @@ static inline bool dbc_encode_and_send_GPS_MASTER_DATA(GPS_MASTER_DATA_t *from)
 
 
 
-/// Not generating code for dbc_decode_GPS_CURRENT_LOCATION() since 'GPS' is not the recipient of any of the signals
+/// Encode GPS's 'GPS_COMPASS_HEADING' message
+/// @returns the message header of this message
+static inline dbc_msg_hdr_t dbc_encode_GPS_COMPASS_HEADING(uint8_t bytes[8], GPS_COMPASS_HEADING_t *from)
+{
+    uint32_t raw;
+    bytes[0]=bytes[1]=bytes[2]=bytes[3]=bytes[4]=bytes[5]=bytes[6]=bytes[7]=0;
+
+    if(from->GEO_DATA_COMPASS_HEADING_UNSIGNED < 0) { from->GEO_DATA_COMPASS_HEADING_UNSIGNED = 0; } // Min value: 0
+    if(from->GEO_DATA_COMPASS_HEADING_UNSIGNED > 359) { from->GEO_DATA_COMPASS_HEADING_UNSIGNED = 359; } // Max value: 359
+    raw = ((uint32_t)(((from->GEO_DATA_COMPASS_HEADING_UNSIGNED) / 0.1) + 0.5)) & 0xffff;
+    bytes[0] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B0
+    bytes[1] |= (((uint8_t)(raw >> 8) & 0xff)); ///< 8 bit(s) starting from B8
+
+    return GPS_COMPASS_HEADING_HDR;
+}
+
+/// Encode and send for dbc_encode_GPS_COMPASS_HEADING() message
+static inline bool dbc_encode_and_send_GPS_COMPASS_HEADING(GPS_COMPASS_HEADING_t *from)
+{
+    uint8_t bytes[8];
+    const dbc_msg_hdr_t hdr = dbc_encode_GPS_COMPASS_HEADING(bytes, from);
+    return dbc_app_send_can_msg(hdr.mid, hdr.dlc, bytes);
+}
+
+
+
+/// Not generating code for dbc_encode_MASTER_ACKNOWLEDGEMENT() since the sender is MASTER and we are GPS
+
+/// Not generating code for dbc_encode_MASTER_DRIVING_CAR() since the sender is MASTER and we are GPS
+
+/// Not generating code for dbc_encode_MOTOR_CAR_SPEED() since the sender is MOTOR and we are GPS
+
+/// Not generating code for dbc_encode_MOTOR_HEARTBEAT() since the sender is MOTOR and we are GPS
+
+/// Not generating code for dbc_encode_SENSOR_HEARTBEAT() since the sender is SENSOR and we are GPS
+
+/// Not generating code for dbc_encode_SENSOR_SONARS() since the sender is SENSOR and we are GPS
 
 /// Decode COM_BRIDGE's 'COM_BRIDGE_CHECK_POINT' message
 /// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
@@ -355,21 +393,19 @@ static inline bool dbc_decode_COM_BRIDGE_CLICKED_START(COM_BRIDGE_CLICKED_START_
 }
 
 
-/// Not generating code for dbc_decode_MASTER_DRIVING_CAR() since 'GPS' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_SENSOR_SONARS() since 'GPS' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_MOTOR_HEARTBEAT() since 'GPS' is not the recipient of any of the signals
-
-/// Not generating code for dbc_decode_MOTOR_CAR_SPEED() since 'GPS' is not the recipient of any of the signals
+/// Not generating code for dbc_decode_COM_BRIDGE_HEARTBEAT() since 'GPS' is not the recipient of any of the signals
 
 /// Not generating code for dbc_decode_COM_BRIDGE_STOPALL() since 'GPS' is not the recipient of any of the signals
 
-/// Not generating code for dbc_decode_SENSOR_HEARTBEAT() since 'GPS' is not the recipient of any of the signals
+/// Not generating code for dbc_decode_GPS_ACKNOWLEDGEMENT() since 'GPS' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_GPS_CURRENT_LOCATION() since 'GPS' is not the recipient of any of the signals
 
 /// Not generating code for dbc_decode_GPS_HEARTBEAT() since 'GPS' is not the recipient of any of the signals
 
-/// Not generating code for dbc_decode_COM_BRIDGE_HEARTBEAT() since 'GPS' is not the recipient of any of the signals
+/// Not generating code for dbc_decode_GPS_MASTER_DATA() since 'GPS' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_GPS_COMPASS_HEADING() since 'GPS' is not the recipient of any of the signals
 
 /// Decode MASTER's 'MASTER_ACKNOWLEDGEMENT' message
 /// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
@@ -392,9 +428,15 @@ static inline bool dbc_decode_MASTER_ACKNOWLEDGEMENT(MASTER_ACKNOWLEDGEMENT_t *t
 }
 
 
-/// Not generating code for dbc_decode_GPS_ACKNOWLEDGEMENT() since 'GPS' is not the recipient of any of the signals
+/// Not generating code for dbc_decode_MASTER_DRIVING_CAR() since 'GPS' is not the recipient of any of the signals
 
-/// Not generating code for dbc_decode_GPS_MASTER_DATA() since 'GPS' is not the recipient of any of the signals
+/// Not generating code for dbc_decode_MOTOR_CAR_SPEED() since 'GPS' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_MOTOR_HEARTBEAT() since 'GPS' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_SENSOR_HEARTBEAT() since 'GPS' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_SENSOR_SONARS() since 'GPS' is not the recipient of any of the signals
 
 /// Handle the MIA for COM_BRIDGE's COM_BRIDGE_CHECK_POINT for MUX "m0" message
 /// @param   time_incr_ms  The time to increment the MIA counter with
