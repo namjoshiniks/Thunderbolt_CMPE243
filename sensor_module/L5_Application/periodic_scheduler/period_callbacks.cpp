@@ -95,6 +95,7 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
+
 	//Check CAN bus
 	if(CAN_is_bus_off(can1))
 	{
@@ -134,7 +135,7 @@ void period_10Hz(uint32_t count)
 {
 	static SENSOR_SONARS_t sonar_data;
 	sonar_data.SENSOR_SONARS_LEFT_UNSIGNED = leftDistance;
-	sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED = backDistance; //change back after checking wiring
+	sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED = rightDistance; //change back after checking wiring
 	sonar_data.SENSOR_SONARS_FRONT_UNSIGNED = frontDistance;
 	sonar_data.SENSOR_SONARS_BACK_UNSIGNED = backDistance;
 	//can_msg_t can_msg;
@@ -149,6 +150,12 @@ void period_10Hz(uint32_t count)
 	if(CAN_tx(can1, &can_msg, 0))
 	{
 	   //printf("Send data success\n");
+		printf("DISTANCE 1 and 2 **************\n"); //testing
+		printf("Front: %i\n", sonar_data.SENSOR_SONARS_FRONT_UNSIGNED);
+		printf("Back: %i\n", sonar_data.SENSOR_SONARS_BACK_UNSIGNED);
+	    printf("DISTANCE 3 and 4 ===============\n"); //testing
+	    printf("Left: %i\n", sonar_data.SENSOR_SONARS_LEFT_UNSIGNED); //testing don't need delay
+	    printf("Right: %i\n", sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED); //testing don't need delay
 	}
 	else
 	{
@@ -172,17 +179,11 @@ void period_100Hz(uint32_t count)
 	}
 	else if(sensorCount == 4)
 	{
-		printf("DISTANCE 1 and 2 **************\n"); //testing
-		printf("Front: %i\n", frontDistance);
-		printf("Back: %i\n", backDistance);
 		Sensor_RX1->setLow();
 		Sensor_RX2->setHigh();
 	}
 	else if(sensorCount == 8)
 	{
-        printf("DISTANCE 3 and 4 ===============\n"); //testing
-        printf("Left: %i\n", leftDistance); //testing don't need delay
-        printf("Right: %i\n", rightDistance); //testing don't need delay
 		sensorCount = -1;
 	}
 	sensorCount++;
