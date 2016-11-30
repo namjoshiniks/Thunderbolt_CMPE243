@@ -37,6 +37,8 @@
 #include "ssp1.h"
 #include "eint.h"
 
+#include "tlm/c_tlm_var.h"
+
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -77,6 +79,12 @@ bool period_init(void)
 /// Register any telemetry variables
 bool period_reg_tlm(void)
 {
+	tlm_component *bucket = tlm_component_get_by_name("disk");
+	TLM_REG_VAR(bucket, leftDistance, tlm_int);
+	TLM_REG_VAR(bucket, rightDistance, tlm_int);
+	TLM_REG_VAR(bucket, frontDistance, tlm_int);
+	TLM_REG_VAR(bucket, backDistance, tlm_int);
+
     // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
     return true; // Must return true upon success
 }
