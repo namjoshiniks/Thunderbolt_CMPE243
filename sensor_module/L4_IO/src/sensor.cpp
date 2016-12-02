@@ -55,27 +55,27 @@ void updateCANsonar(SENSOR_SONARS_t *CAN_sensor)
 }
 
 
-bool initializeRX_1()
-{
-    static GPIO *Sensor_Input = new GPIO(P0_30);
-    Sensor_Input->setAsOutput();
-    Sensor_Input->setHigh();
-    vTaskDelay(250);
-    Sensor_Input->setLow();
-    delete Sensor_Input;
-    return true;
-}
-
-bool initializeRX_2()
-{
-	static GPIO *Sensor_Input = new GPIO(P0_29);
-	Sensor_Input->setAsOutput();
-	Sensor_Input->setHigh();
-	vTaskDelay(250);
-	Sensor_Input->setLow();
-	delete Sensor_Input;
-	return true;
-}
+//bool initializeRX_1()
+//{
+//    static GPIO *Sensor_Input = new GPIO(P0_30);
+//    Sensor_Input->setAsOutput();
+//    Sensor_Input->setHigh();
+//    vTaskDelay(250);
+//    Sensor_Input->setLow();
+//    delete Sensor_Input;
+//    return true;
+//}
+//
+//bool initializeRX_2()
+//{
+//	static GPIO *Sensor_Input = new GPIO(P0_29);
+//	Sensor_Input->setAsOutput();
+//	Sensor_Input->setHigh();
+//	vTaskDelay(250);
+//	Sensor_Input->setLow();
+//	delete Sensor_Input;
+//	return true;
+//}
 
 void frontstartTimer(void)
 {
@@ -86,9 +86,6 @@ void frontstopTimer(void)
 {
    frontStop = (int)sys_get_uptime_us() - frontStart;
    frontDistance = frontStop/147;
-   long yield = 0;
-   //xSemaphoreGiveFromISR(sensor1, &yield);
-   portYIELD_FROM_ISR(&yield);
 }
 
 void backstartTimer(void)
@@ -99,9 +96,6 @@ void backstopTimer(void)
 {
     backStop = (int)sys_get_uptime_us() - backStart;
     backDistance = backStop/147;
-    long yield = 0;
-    //xSemaphoreGiveFromISR(sensor2, &yield);
-    portYIELD_FROM_ISR(&yield);
 }
 
 void leftstartTimer(void)
@@ -112,9 +106,6 @@ void leftstopTimer(void)
 {
     leftStop = (int)sys_get_uptime_us() - leftStart;
     leftDistance = leftStop/147;
-    long yield = 0;
-    //xSemaphoreGiveFromISR(sensor3, &yield);
-    portYIELD_FROM_ISR(&yield);
 }
 
 void rightstartTimer(void)
@@ -125,9 +116,6 @@ void rightstopTimer(void)
 {
     rightStop = (int)sys_get_uptime_us() - rightStart;
     rightDistance = rightStop/147;
-    long yield = 0;
-    //xSemaphoreGiveFromISR(sensor4, &yield);
-    portYIELD_FROM_ISR(&yield);
 }
 
 void sendLEDmessage(int distance1, int distance2, int distance3)

@@ -32,7 +32,6 @@
 #include "io.hpp"
 #include "periodic_callback.h"
 #include <stdio.h>
-//#include "_can_dbc/generated_can.h"
 #include "sensor.hpp"
 #include "ssp1.h"
 #include "eint.h"
@@ -98,7 +97,10 @@ bool period_reg_tlm(void)
 void period_1Hz(uint32_t count)
 {
 	//Check CAN bus
-	if(checkCANbus());
+	if(checkCANbus())
+	{
+		// Bus Error
+	}
 	else
 	{
 		LE.off(4);
@@ -114,7 +116,7 @@ void period_1Hz(uint32_t count)
 
 		if(CAN_tx(can1, &can_msg, 0))
 		 {
-			//printf("Send heartbeat success\n");
+			printf("Send heartbeat success\n");
 		 }
 		 else
 		 {
@@ -128,12 +130,7 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
 	static SENSOR_SONARS_t sonar_data;
-//	sonar_data.SENSOR_SONARS_LEFT_UNSIGNED = leftDistance;
-//	sonar_data.SENSOR_SONARS_RIGHT_UNSIGNED = rightDistance; //change back after checking wiring
-//	sonar_data.SENSOR_SONARS_FRONT_UNSIGNED = frontDistance;
-//	sonar_data.SENSOR_SONARS_BACK_UNSIGNED = backDistance;
 	updateCANsonar(&sonar_data);
-	//can_msg_t can_msg;
 	can_msg_t can_msg = {0};
 
 	// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
@@ -145,7 +142,7 @@ void period_10Hz(uint32_t count)
 	// Queue the CAN message to be sent out
 	if(CAN_tx(can1, &can_msg, 0))
 	{
-	   //printf("Send data success\n");
+	   printf("Send data success\n");
 	}
 	else
 	{
@@ -165,8 +162,9 @@ void period_100Hz(uint32_t count)
     Sensor_RX2->setAsOutput();
 	if(sensorCount == 0)
 	{
-		Sensor_RX1->setHigh();
 		Sensor_RX2->setLow();
+		vTaskDelay(10);
+		Sensor_RX1->setHigh();
 	}
 	else if(sensorCount == 4)
 	{
@@ -174,6 +172,7 @@ void period_100Hz(uint32_t count)
 		printf("Front: %i\n", frontDistance);
 		printf("Back: %i\n", backDistance);
 		Sensor_RX1->setLow();
+		vTaskDelay(10);
 		Sensor_RX2->setHigh();
 	}
 	else if(sensorCount == 8)
