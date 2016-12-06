@@ -21,6 +21,8 @@ void Heartbeat();
 
 void DummyData(uint32_t count);
 
+void Reset();
+
 void CAN_Receive();
 
 void Handle_MiaMsg();

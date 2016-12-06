@@ -21,6 +21,7 @@ using namespace std;
 
 
 bool disableflag = false;
+bool isReset = false;
 
 string Latlng = "";
 string latlon[] = {"", ""};
@@ -51,8 +52,8 @@ COM_BRIDGE_CLICKED_START_t startSig = { 0 };
 MOTOR_CAR_SPEED_t motorData = { 0 };
 GPS_COMPASS_HEADING_t gpsCompass = { 0 };
 MASTER_DRIVING_CAR_t masterDriving;
-int count1 = 0;
-int setCount = 0;
+int count1 = -1;
+int setCount = -1;
 const uint32_t                             GPS_CURRENT_LOCATION__MIA_MS = 3000;
 const GPS_CURRENT_LOCATION_t               GPS_CURRENT_LOCATION__MIA_MSG = { 0 };
 const uint32_t                             GPS_ACKNOWLEDGEMENT__MIA_MS = 1500;
@@ -127,6 +128,15 @@ void DummyData(uint32_t count)
 
 }
 
+void Reset()
+{
+	if(isReset)
+	{
+		isReset = false;
+		sys_reboot();
+	}
+}
+
 void CAN_Receive()
 {
 	while(CAN_rx(can1, &can_msg, 0))
@@ -181,8 +191,8 @@ void MotorDecode(uint32_t count)
 		speedDistance[1] = os2.str();
 		speedDistance[0] = speedDistance[0] + "%";
 		speedDistance[1] = speedDistance[1] + "^";
-		cout << "Distance: " << speedDistance[0]<< endl;
-		cout << "Speed: " << speedDistance[1]<< endl;
+		//cout << "Distance: " << speedDistance[0]<< endl;
+		//cout << "Speed: " << speedDistance[1]<< endl;
 		s2 = speedDistance[0].c_str();
 		u3->putline(s2);
 		s2 = speedDistance[1].c_str();
@@ -203,7 +213,7 @@ void CompassDecode(uint32_t count)
 		os1 <<  gpsCompass.GEO_DATA_COMPASS_HEADING_UNSIGNED;
 		compassValue = os1.str();
 		compassValue = compassValue + "&";
-		cout << "Compass Heading: " << compassValue << endl;
+		//cout << "Compass Heading: " << compassValue << endl;
 		LD.setNumber((int)gpsCompass.GEO_DATA_COMPASS_HEADING_UNSIGNED%100);
 		s2 = compassValue.c_str();
 		u3->putline(s2);
@@ -226,8 +236,7 @@ void GPSDecode()
 		//Continue accepting current location and sending to android
 		latlon[0] = latlon[0] + "#";
 		latlon[1] = latlon[1] + "$";
-		cout << "Latitude " <<  latlon[0] << endl;
-		cout << "Longitude" << latlon[1] << endl;
+		cout << "Latitude " <<   gpsData.GPS_LATTITUDE_SIGNED << " Longitude " << gpsData.GPS_LONGITUDE_SIGNED << endl;
 		s2 = latlon[0].c_str();
 		u3->putline(s2);
 		s2 = latlon[1].c_str();
@@ -272,7 +281,6 @@ void StartStopCheckpoint()
 {
 	  if(isClickEnabled)
 	  {
-
 		if(count1 < 0 && gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED == 100)
 			count1 = setCount;
 		if(gpsACK.GPS_ACKNOWLEDGEMENT_UNSIGNED != 0 && count1 >= 0 and !isACK)
@@ -309,7 +317,7 @@ void StartStopCheckpoint()
 			 can_msg.msg_id = msg_hdr.mid;
 			 can_msg.frame_fields.data_len = msg_hdr.dlc;
 			 CAN_tx(can1, &can_msg, 0);
-			 //startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = { 0 };
+			 startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = { 0 };
 			}
 
 		}
@@ -376,17 +384,20 @@ void BT(void *p)
 		else if(c == '#')
 		{
 			 istringstream(Latlng) >> latitude[i];
-
-			//cout << "Latitude: "<< latitude[i]  << endl;
+			 cout << i  << " Latitude: " << latitude[i] << endl;
 			Latlng = "";
 		}
 		else if(c == '$')
 		{
 			istringstream(Latlng) >> longitude[i] ;
-			//cout <<"Longitude: " << longitude[i] << endl;
+			cout << i << " Longitude: " << longitude[i] << endl;
 			Latlng = "";
 			i++;
 			setCount++;
+		}
+		else if(c == 'R')
+		{
+			isReset = true;
 		}
 		else
 		{
