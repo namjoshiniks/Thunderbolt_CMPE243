@@ -27,11 +27,12 @@ static const dbc_msg_hdr_t COM_BRIDGE_CHECK_POINT_HDR =           {  148, 8 };
 static const dbc_msg_hdr_t COM_BRIDGE_CLICKED_START_HDR =         {   84, 2 };
 // static const dbc_msg_hdr_t COM_BRIDGE_HEARTBEAT_HDR =             {  340, 2 };
 // static const dbc_msg_hdr_t COM_BRIDGE_STOPALL_HDR =               {    4, 2 };
+static const dbc_msg_hdr_t COM_BRIDGE_RESET_HDR =                 {   10, 2 };
 static const dbc_msg_hdr_t GPS_ACKNOWLEDGEMENT_HDR =              {  290, 2 };
 static const dbc_msg_hdr_t GPS_CURRENT_LOCATION_HDR =             {  162, 8 };
 static const dbc_msg_hdr_t GPS_HEARTBEAT_HDR =                    {  338, 2 };
 static const dbc_msg_hdr_t GPS_MASTER_DATA_HDR =                  {  146, 7 };
-static const dbc_msg_hdr_t GPS_COMPASS_HEADING_HDR =              {  300, 2 };
+static const dbc_msg_hdr_t GPS_COMPASS_HEADING_HDR =              {  300, 3 };
 static const dbc_msg_hdr_t MASTER_ACKNOWLEDGEMENT_HDR =           {  281, 2 };
 // static const dbc_msg_hdr_t MASTER_DRIVING_CAR_HDR =               {  209, 8 };
 // static const dbc_msg_hdr_t MOTOR_CAR_SPEED_HDR =                  {  147, 4 };
@@ -77,6 +78,14 @@ typedef struct {
 } COM_BRIDGE_CLICKED_START_t;
 
 
+/// Message: COM_BRIDGE_RESET from 'COM_BRIDGE', DLC: 2 byte(s), MID: 10
+typedef struct {
+    uint16_t COM_BRIDGE_RESET_UNSIGNED;       ///< B10:0   Destination: MASTER,GPS,MOTOR,SENSOR
+
+    dbc_mia_info_t mia_info;
+} COM_BRIDGE_RESET_t;
+
+
 /// Message: GPS_ACKNOWLEDGEMENT from 'GPS', DLC: 2 byte(s), MID: 290
 typedef struct {
     uint16_t GPS_ACKNOWLEDGEMENT_UNSIGNED;    ///< B10:0   Destination: COM_BRIDGE
@@ -113,7 +122,7 @@ typedef struct {
 } GPS_MASTER_DATA_t;
 
 
-/// Message: GPS_COMPASS_HEADING from 'GPS', DLC: 2 byte(s), MID: 300
+/// Message: GPS_COMPASS_HEADING from 'GPS', DLC: 3 byte(s), MID: 300
 typedef struct {
     float GEO_DATA_COMPASS_HEADING_UNSIGNED;  ///< B15:0  Min: 0 Max: 359   Destination: COM_BRIDGE
 
@@ -136,6 +145,8 @@ extern const uint32_t                             COM_BRIDGE_CHECK_POINT_m1__MIA
 extern const COM_BRIDGE_CHECK_POINT_m1_t          COM_BRIDGE_CHECK_POINT_m1__MIA_MSG;
 extern const uint32_t                             COM_BRIDGE_CLICKED_START__MIA_MS;
 extern const COM_BRIDGE_CLICKED_START_t           COM_BRIDGE_CLICKED_START__MIA_MSG;
+extern const uint32_t                             COM_BRIDGE_RESET__MIA_MS;
+extern const COM_BRIDGE_RESET_t                   COM_BRIDGE_RESET__MIA_MSG;
 extern const uint32_t                             MASTER_ACKNOWLEDGEMENT__MIA_MS;
 extern const MASTER_ACKNOWLEDGEMENT_t             MASTER_ACKNOWLEDGEMENT__MIA_MSG;
 /// @}
@@ -148,6 +159,8 @@ extern const MASTER_ACKNOWLEDGEMENT_t             MASTER_ACKNOWLEDGEMENT__MIA_MS
 /// Not generating code for dbc_encode_COM_BRIDGE_HEARTBEAT() since the sender is COM_BRIDGE and we are GPS
 
 /// Not generating code for dbc_encode_COM_BRIDGE_STOPALL() since the sender is COM_BRIDGE and we are GPS
+
+/// Not generating code for dbc_encode_COM_BRIDGE_RESET() since the sender is COM_BRIDGE and we are GPS
 
 /// Encode GPS's 'GPS_ACKNOWLEDGEMENT' message
 /// @returns the message header of this message
@@ -397,6 +410,27 @@ static inline bool dbc_decode_COM_BRIDGE_CLICKED_START(COM_BRIDGE_CLICKED_START_
 
 /// Not generating code for dbc_decode_COM_BRIDGE_STOPALL() since 'GPS' is not the recipient of any of the signals
 
+/// Decode COM_BRIDGE's 'COM_BRIDGE_RESET' message
+/// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check
+static inline bool dbc_decode_COM_BRIDGE_RESET(COM_BRIDGE_RESET_t *to, const uint8_t bytes[8], const dbc_msg_hdr_t *hdr)
+{
+    const bool success = true;
+    // If msg header is provided, check if the DLC and the MID match
+    if (NULL != hdr && (hdr->dlc != COM_BRIDGE_RESET_HDR.dlc || hdr->mid != COM_BRIDGE_RESET_HDR.mid)) {
+        return !success;
+    }
+
+    uint32_t raw;
+    raw  = ((uint32_t)((bytes[0]))); ///< 8 bit(s) from B0
+    raw |= ((uint32_t)((bytes[1]) & 0x07)) << 8; ///< 3 bit(s) from B8
+    to->COM_BRIDGE_RESET_UNSIGNED = ((raw));
+
+    to->mia_info.mia_counter_ms = 0; ///< Reset the MIA counter
+
+    return success;
+}
+
+
 /// Not generating code for dbc_decode_GPS_ACKNOWLEDGEMENT() since 'GPS' is not the recipient of any of the signals
 
 /// Not generating code for dbc_decode_GPS_CURRENT_LOCATION() since 'GPS' is not the recipient of any of the signals
@@ -503,6 +537,30 @@ static inline bool dbc_handle_mia_COM_BRIDGE_CLICKED_START(COM_BRIDGE_CLICKED_ST
         // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
         *msg = COM_BRIDGE_CLICKED_START__MIA_MSG;
         msg->mia_info.mia_counter_ms = COM_BRIDGE_CLICKED_START__MIA_MS;
+        msg->mia_info.is_mia = true;
+        mia_occurred = true;
+    }
+
+    return mia_occurred;
+}
+
+/// Handle the MIA for COM_BRIDGE's COM_BRIDGE_RESET message
+/// @param   time_incr_ms  The time to increment the MIA counter with
+/// @returns true if the MIA just occurred
+/// @post    If the MIA counter reaches the MIA threshold, MIA struct will be copied to *msg
+static inline bool dbc_handle_mia_COM_BRIDGE_RESET(COM_BRIDGE_RESET_t *msg, uint32_t time_incr_ms)
+{
+    bool mia_occurred = false;
+    const dbc_mia_info_t old_mia = msg->mia_info;
+    msg->mia_info.is_mia = (msg->mia_info.mia_counter_ms >= COM_BRIDGE_RESET__MIA_MS);
+
+    if (!msg->mia_info.is_mia) { // Not MIA yet, so keep incrementing the MIA counter
+        msg->mia_info.mia_counter_ms += time_incr_ms;
+    }
+    else if(!old_mia.is_mia)   { // Previously not MIA, but it is MIA now
+        // Copy MIA struct, then re-write the MIA counter and is_mia that is overwriten
+        *msg = COM_BRIDGE_RESET__MIA_MSG;
+        msg->mia_info.mia_counter_ms = COM_BRIDGE_RESET__MIA_MS;
         msg->mia_info.is_mia = true;
         mia_occurred = true;
     }

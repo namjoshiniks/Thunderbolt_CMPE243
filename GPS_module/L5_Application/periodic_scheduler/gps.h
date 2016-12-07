@@ -123,6 +123,14 @@ void sendCompassReadingToCom();
  * Calibrate Compass if corresponding switch is pressed
  */
 void compassCalibration();
+/*
+ * Convert values of Latitude and Longitude to decimal degrees
+ */
+void toDecimalDegrees();
 
+/*
+ * Reset board
+ */
+void reset();
 
 #endif /* L5_APPLICATION_PERIODIC_SCHEDULER_GPS_H_ */

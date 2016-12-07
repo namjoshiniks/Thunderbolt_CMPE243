@@ -32,6 +32,7 @@
 #include "gps.h"
 
 
+
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -70,6 +71,7 @@ void period_1Hz(uint32_t count)
 	can_reset();
 	sendCurrentLocation();
 	sendCompassReadingToCom();
+
 }
 
 void period_10Hz(uint32_t count)
@@ -78,12 +80,14 @@ void period_10Hz(uint32_t count)
 	compassCalibration();
 	getDataFromGPS();
 	parseGPSdata();
+	toDecimalDegrees();
 	sendtoMaster();
 }
 
 void period_100Hz(uint32_t count)
 {
 	recieveAndSaveCheckpoints();
+	acknowledgmentTocb();
 
 }
 

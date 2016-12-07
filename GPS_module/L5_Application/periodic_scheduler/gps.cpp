@@ -6,6 +6,7 @@
 // */
 #include "gps.h"
 #include <iostream>
+#include "lpc_sys.h"
 #define EARTH_RADIUS 6384000
 #define PI 3.14159
 #define MIN_PER_DEGREE 60.0
@@ -14,6 +15,9 @@
 /* Temporary strings */
 string temp1, temp2, temp3, temp4, temp5, temp6;
 string deg ="";
+
+/* Com-bridge reset */
+COM_BRIDGE_RESET_t resetFromCom {0};
 
 /* Compass Reading to COM-BRIDGE */
 GPS_COMPASS_HEADING_t compassTocom {0};
@@ -56,6 +60,8 @@ bool AcknowledgmentSent=false;
 int TotalCheckpointCount = 0 ;
 
 /* MIA handling of COM_BRIDGE */
+const uint32_t COM_BRIDGE_RESET__MIA_MS = 3000;
+const COM_BRIDGE_RESET_t COM_BRIDGE_RESET__MIA_MSG { 0 };
 const uint32_t COM_BRIDGE_CHECK_POINT_m0__MIA_MS = 3000;
 const uint32_t COM_BRIDGE_CHECK_POINT_m1__MIA_MS = 3000;
 const COM_BRIDGE_CHECK_POINT_m0_t COM_BRIDGE_CHECK_POINT_m0__MIA_MSG = { 0 };
@@ -117,6 +123,8 @@ char reg_address ; //command register
 char dev_address= 0xC0; //device address
 uint16_t compass1;
 uint16_t compass2;
+double turn_angle1;
+double turn_angle2;
 
 /* Create i2c2 instance */
 I2C2& i2c2 = I2C2::getInstance();
@@ -179,11 +187,21 @@ double distanceCalculation(double lat1,double lat2,double long1,double long2)
  */
 double bearing(double Lat1,double Lat2,double Long1,double Long2)
 {
-	double dLong = Long2 -Long1;
-	double arg1 = sin (Long2) * cos (Lat2);
+	double dLong = Long2 - Long1;
+	double arg1 = sin (dLong) * cos (Lat2);
 	double arg2 = ((cos (Lat1) *  sin(Lat2)) - ( sin (Lat1) * cos(Lat2) * cos(dLong)));
-	double turn_angle1 = atan2(arg1 , arg2);
-	turn_angle = final_Reading - turn_angle1;
+	turn_angle1 = atan2(arg1 , arg2);
+	turn_angle2 = toDegree(turn_angle1);
+
+	if(turn_angle2 < 0)
+	{
+		turn_angle2 = 360 + turn_angle2;
+	}
+	turn_angle = turn_angle2 - final_Reading ;
+	if(turn_angle > 180 )
+	{
+		turn_angle = turn_angle-360;
+	}
 	return (turn_angle);
 
 }
@@ -209,10 +227,7 @@ void heartbeat()
 	msg_hdr = dbc_encode_GPS_HEARTBEAT(can_msg.data.bytes, &heartbeat);
 	can_msg.msg_id = msg_hdr.mid;
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
-	if (CAN_tx(can1, &can_msg, 0))
-	{
-		printf("heartbeat sent\n");
-	}
+	CAN_tx(can1, &can_msg, 0);
 }
 /*
  * If CAN bus is off ,reset it
@@ -222,6 +237,7 @@ void can_reset()
 
 	if(CAN_is_bus_off(can1))
 	{
+		LE.toggle(1);
 		CAN_reset_bus(can1);
 	}
 }
@@ -233,7 +249,6 @@ void getDataFromGPS()
 {
 	gps = new char[75];
 	u2.gets(gps,75,0);
-	printf(" gps string is %s\n",gps);
 
 }
 
@@ -245,27 +260,26 @@ void parseGPSdata()
 	stringstream ss(gps);
 	int i = 1;
 	string t1, t2;
-	while (getline(ss,token, ','))
-	{
-		if (i == 3)
-			lat1 = token;
-		else if (i == 5)
-			long1 = token;
-		else if (i == 4 && token == "S")
-			lat1.insert(0, 1,c);
-		else if (i == 6  && token == "W")
-			long1.insert(0, 1, c);
-		i++;
-	}
-	cout << "parsed latitude  = " << lat1 << endl;
-	cout << "parsed longitude = " << long1 << endl;
+
+		while (getline(ss,token, ','))
+		{
+			if (i == 3)
+				lat1 = token;
+			else if (i == 5)
+				long1 = token;
+			else if (i == 4 && token == "S")
+				lat1.insert(0, 1,c);
+			else if (i == 6  && token == "W")
+				long1.insert(0, 1, c);
+			i++;
+		}
+
 	delete gps;
 }
 
 /*
  * Convert values of Latitude and Longitude to decimal degrees
  */
-
 void toDecimalDegrees()
 {string min ="";
 //Converting Latitude
@@ -314,15 +328,16 @@ if (long1.length() > 10)
 	temp2 = long1[2];
 	temp3 = long1[3];
 	deg = temp1 + temp2 + temp3;
+
 	temp1 = long1[4];
 	temp2 = long1[5];
-	temp3 = lat1[7];
-	temp4 = lat1[8];
-	temp5= lat1[9];
-	temp6 = lat1[10];
+	temp3 = long1[7];
+	temp4 = long1[8];
+	temp5= long1[9];
+	temp6 = long1[10];
 	min = temp1 + temp2 + temp3 + temp4 + temp5 + temp6;
 }
-else
+else if(long1.length() == 10)
 {
 	temp1 = long1[0];
 	temp2 = long1[1];
@@ -330,11 +345,11 @@ else
 	deg = temp1 + temp2 + temp3;
 	temp1 = long1[3];
 	temp2 = long1[4];
-	temp3 = lat1[6];
-	temp4 = lat1[7];
-	temp5= lat1[8];
-	temp6 = lat1[9];
-	min = temp1 + temp2 + temp3 + temp4 + temp5 + temp6;;
+	temp3 = long1[6];
+	temp4 = long1[7];
+	temp5= long1[8];
+	temp6 = long1[9];
+	min = temp1 + temp2 + temp3 + temp4 + temp5 + temp6;
 }
 
 istringstream(deg) >> deg1;
@@ -345,11 +360,8 @@ if (c2 == "-")
 {
 	longitude_dcm = -1 * longitude_dcm;
 }
-cout << "latitude is "  << fixed << latitude_dcm << endl;
-cout << "longitude is " << fixed <<longitude_dcm << endl;
+
 currentLocationString ="";
-
-
 
 }
 
@@ -364,7 +376,11 @@ void sendCurrentLocation()
 	msg_hdr = dbc_encode_GPS_CURRENT_LOCATION(can_msg.data.bytes, &com_data);
 	can_msg.msg_id = msg_hdr.mid;
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
-	CAN_tx(can1, &can_msg, 0);
+	if(CAN_tx(can1, &can_msg, 0))
+	{//printf ("Current location in can \n lat= %lf \n long= %lf \n", com_data.GPS_LATTITUDE_SIGNED, com_data.GPS_LONGITUDE_SIGNED  );
+	printf ("Current location \n lat= %lf \n long= %lf \n", latitude_dcm, longitude_dcm  );
+	}
+	//printf ("Current location \n lat= %lf \n long= %lf \n", latitude_dcm, longitude_dcm  );
 }
 
 /*
@@ -384,11 +400,12 @@ void recieveAndSaveCheckpoints()
 		{
 			TotalCheckpointCount = checkpoint_can_msg.m0.COM_BRIDGE_TOTAL_COUNT_UNSIGNED;
 		}
+
 	}
 
 
 	/*
-	 * Save Lattitude and Longitude
+	 * Save Latitude and Longitude
 	 */
 
 	if (checkpoint_can_msg.m0.COM_BRIDGE_LATTITUDE_SIGNED != 0)
@@ -424,8 +441,9 @@ void recieveAndSaveCheckpoints()
 void acknowledgmentTocb()
 {
 
-	if(totalLongitudeReceived == TotalCheckpointCount && totalLatitudeReceived == TotalCheckpointCount && TotalCheckpointCount)
+	if(totalLongitudeReceived == TotalCheckpointCount+1 && totalLatitudeReceived == TotalCheckpointCount+1 && TotalCheckpointCount)
 	{
+
 		ackToComBridge.GPS_ACKNOWLEDGEMENT_UNSIGNED = GPS_ACKNOWLEDGEMENT_HDR.mid;
 		can_msg = { 0 };
 		msg_hdr = dbc_encode_GPS_ACKNOWLEDGEMENT(can_msg.data.bytes, &ackToComBridge);
@@ -433,7 +451,7 @@ void acknowledgmentTocb()
 		can_msg.frame_fields.data_len = msg_hdr.dlc;
 		CAN_tx(can1, &can_msg, 0);
 		isCheckpointReceived = false;
-		AcknowledgmentSent=true;
+		AcknowledgmentSent= true;
 		totalLongitudeReceived = 0;
 		totalLatitudeReceived = 0;
 
@@ -446,31 +464,56 @@ void acknowledgmentTocb()
  */
 void sendtoMaster()
 {
-
-	if(AcknowledgmentSent)
+	if(AcknowledgmentSent )
 	{
-		if(checkPointNumber==TotalCheckpointCount)
-		{
-			checkPointNumber=0;
-		}
-		else
-		{
-			master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED = distanceCalculation(checkPoints[checkPointNumber].lattitude,checkPoints[TotalCheckpointCount].lattitude,checkPoints[checkPointNumber].longitude,checkPoints[TotalCheckpointCount].longitude);
-			master_data.GEO_DATA_TURNANGLE_SIGNED = bearing(checkPoints[checkPointNumber].lattitude,checkPoints[checkPointNumber+ 1].lattitude,checkPoints[checkPointNumber].longitude,checkPoints[checkPointNumber].longitude);
-			master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED = distanceCalculation(checkPoints[checkPointNumber].lattitude,checkPoints[checkPointNumber+ 1].lattitude,checkPoints[checkPointNumber].longitude,checkPoints[checkPointNumber].longitude);
+
+		   //printf("last lattitude is %lf and final long is %lf \n",checkPoints[TotalCheckpointCount -1 ].lattitude,checkPoints[TotalCheckpointCount -1].longitude);
+			master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED = distanceCalculation(latitude_dcm,checkPoints[TotalCheckpointCount].lattitude,longitude_dcm,checkPoints[TotalCheckpointCount].longitude);
+			double distanceToFinal = distanceCalculation(latitude_dcm,checkPoints[TotalCheckpointCount].lattitude,longitude_dcm,checkPoints[TotalCheckpointCount].longitude);
+			double distanceOfCheckpointToFinal = distanceCalculation(checkPoints[checkPointNumber].lattitude,checkPoints[TotalCheckpointCount].lattitude,checkPoints[checkPointNumber].longitude,checkPoints[TotalCheckpointCount].longitude);
+			master_data.GEO_DATA_TURNANGLE_SIGNED = bearing(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
+			double distanceTocheckpoint2 = distanceCalculation(latitude_dcm,checkPoints[checkPointNumber+1].lattitude,longitude_dcm,checkPoints[checkPointNumber+1].longitude);
+			master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED = distanceCalculation(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
+			distanceToNextCheckpoint = distanceCalculation(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
+			if(master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED <= 3 )
+			{
+				master_data.GEO_DATA_ISFINAL_SIGNED = 1;
+
+			}
+			else
+			{
+				master_data.GEO_DATA_ISFINAL_SIGNED = 0;
+			}
+
+
+			if( distanceOfCheckpointToFinal > distanceToFinal  )
+			{
+				master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED = distanceTocheckpoint2;
+				master_data.GEO_DATA_TURNANGLE_SIGNED = bearing(latitude_dcm,checkPoints[checkPointNumber +1 ].lattitude,longitude_dcm,checkPoints[checkPointNumber +1].longitude);
+				checkPointNumber++;
+			}
+			printf(" turn angle is %lf \n", master_data.GEO_DATA_TURNANGLE_SIGNED );
 			msg_hdr = dbc_encode_GPS_MASTER_DATA(can_msg.data.bytes, &master_data);
 			can_msg.msg_id = msg_hdr.mid;
 			can_msg.frame_fields.data_len = msg_hdr.dlc;
-			if(CAN_tx(can1, &can_msg, 0))
+			if(checkPointNumber <= TotalCheckpointCount + 1)
 			{
-				finalDestinationDistance = master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED;
-				turn_angle = master_data.GEO_DATA_TURNANGLE_SIGNED;
-				distanceToNextCheckpoint= master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED;
-				printf("Distance to final destination is %f \n Distance to next checkpoint is %f\n destination turn angle is %f\n",finalDestinationDistance,distanceToNextCheckpoint,turn_angle);
+				if(CAN_tx(can1, &can_msg, 0))
+				{
+					finalDestinationDistance = master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED;
+					turn_angle = master_data.GEO_DATA_TURNANGLE_SIGNED;
+					distanceToNextCheckpoint= master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED;
+					printf("Distance to final destination is %lf \n Distance to next checkpoint is %lf\n destination turn angle is %lf\n",master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED ,master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED,master_data.GEO_DATA_TURNANGLE_SIGNED);
+					//printf("Distance to final destination is %d \n Distance to next checkpoint is %d\n destination turn angle is %d\n", master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED,master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED, master_data.GEO_DATA_TURNANGLE_SIGNED);
+
+				}
+			}
+			if( master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED<=3 )
+			{
+				printf("checkpoint %d is reached \n",checkPointNumber);
 				checkPointNumber++;
 			}
 		}
-	}
 }
 
 
@@ -522,3 +565,25 @@ void compassCalibration()
 	}
 }
 
+
+/*
+ * Reset board
+ */
+void resetFromCombridge()
+{
+
+	/*
+	 *  check if reset message is received from COM_BRIDGE
+	 */
+	if(CAN_rx(can1, &msg, 0))
+	{
+		can_msg_hdr.dlc = msg.frame_fields.data_len;
+		can_msg_hdr.mid = msg.msg_id;
+		dbc_decode_COM_BRIDGE_RESET(&resetFromCom ,msg.data.bytes, &can_msg_hdr);
+		if(can_msg_hdr.mid == COM_BRIDGE_RESET_HDR.mid)
+		{
+			sys_reboot();
+		}
+	}
+
+}
