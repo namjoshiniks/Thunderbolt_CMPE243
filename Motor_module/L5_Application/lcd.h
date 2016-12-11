@@ -17,7 +17,8 @@ void scroll(string data);
 void processLineOne(void);
 void clearLineTwo(void);
 void processLineTwo(int leftVal, int frontVal, int rightVal, int backVal);
-void processLineThree(char *direction, int speed);
+void processLineThree(string direction, int speed);
+void processLineFour(float, float, float);
 void setupLcd(void);
 void refreshLcd(void);
 
