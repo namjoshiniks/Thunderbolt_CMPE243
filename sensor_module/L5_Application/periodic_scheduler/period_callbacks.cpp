@@ -35,11 +35,18 @@
 #include "sensor.hpp"
 #include "ssp1.h"
 #include "eint.h"
+#include "utilities.h"
 
 #include "tlm/c_tlm_var.h"
 
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
+
+static GPIO *Sensor_RX1 = new GPIO(P0_30);
+static GPIO *Sensor_RX2 = new GPIO(P0_29);
+static GPIO *Sensor_RX3 = new GPIO(P1_19);
+//static GPIO *Sensor_RX4 = new GPIO(P1_20);
+
 
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
@@ -68,7 +75,9 @@ bool period_init(void)
 
 	//enable SSP1
     ssp1_init();
-
+    Sensor_RX1->setAsOutput();
+    Sensor_RX2->setAsOutput();
+    Sensor_RX3->setAsOutput();
 	//CAN initialization
     initializeCAN();
 
@@ -114,14 +123,18 @@ void period_1Hz(uint32_t count)
 		can_msg.msg_id = msg_hdr.mid;
 		can_msg.frame_fields.data_len = msg_hdr.dlc;
 
-		if(CAN_tx(can1, &can_msg, 0))
-		 {
-			printf("Send heartbeat success\n");
-		 }
-		 else
-		 {
-			printf("Send heartbeat fail!\n");
-		 }
+        if (Sensorcomplete)
+        {
+    		if(CAN_tx(can1, &can_msg, 0))
+    		 {
+    //			printf("Send heartbeat success\n");
+    		 }
+    		 else
+    		 {
+    			printf("Send heartbeat fail!\n");
+    		 }
+
+        }
 	}
 
 	enableHeadlights();
@@ -140,13 +153,18 @@ void period_10Hz(uint32_t count)
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
 
 	// Queue the CAN message to be sent out
-	if(CAN_tx(can1, &can_msg, 0))
+	if (Sensorcomplete)
 	{
-	   printf("Send data success\n");
-	}
-	else
-	{
-		printf("Send data fail!\n");
+		if(CAN_tx(can1, &can_msg, 0))
+		{
+	//	   printf("Send data success\n");
+			Sensorcomplete = false;
+		}
+		else
+		{
+			printf("Send data fail!\n");
+		}
+
 	}
 
 	sendLEDmessage(leftDistance, frontDistance, rightDistance);
@@ -156,30 +174,33 @@ void period_100Hz(uint32_t count)
 {
 	//Sensor triggering RX
 	static int sensorCount = 0;
-    static GPIO *Sensor_RX1 = new GPIO(P0_30);
-    static GPIO *Sensor_RX2 = new GPIO(P0_29);
-    Sensor_RX1->setAsOutput();
-    Sensor_RX2->setAsOutput();
+
 	if(sensorCount == 0)
 	{
-		Sensor_RX2->setLow();
-		vTaskDelay(10);
+//		Sensor_RX2->setLow();
+//		vTaskDelay(10);
 		Sensor_RX1->setHigh();
+		delay_us(30);
+		Sensor_RX1->setLow();
 	}
 	else if(sensorCount == 4)
 	{
-		printf("DISTANCE 1 and 2 **************\n"); //testing
-		printf("Front: %i\n", frontDistance);
-		printf("Back: %i\n", backDistance);
-		Sensor_RX1->setLow();
-		vTaskDelay(10);
+//		printf("DISTANCE 1 and 2 **************\n"); //testing
+//    	printf("Front: %i\n", frontDistance);
+//		printf("Back: %i\n", backDistance);
 		Sensor_RX2->setHigh();
+		delay_us(30);
+		Sensor_RX2->setLow();
 	}
 	else if(sensorCount == 8)
 	{
-        printf("DISTANCE 3 and 4 ===============\n"); //testing
-        printf("Left: %i\n", leftDistance); //testing don't need delay
-        printf("Right: %i\n", rightDistance); //testing don't need delay
+//        printf("DISTANCE 3 and 4 ===============\n"); //testing
+//        printf("Left: %i\n", leftDistance); //testing don't need delay
+//        printf("Right: %i\n", rightDistance); //testing don't need delay
+		  Sensor_RX3->setHigh();
+		  delay_us(30);
+		  Sensor_RX3->setLow();
+		  Sensorcomplete = true;
 		sensorCount = -1;
 	}
 	sensorCount++;

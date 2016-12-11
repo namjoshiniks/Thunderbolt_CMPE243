@@ -22,6 +22,8 @@ extern int rightDistance;
 extern int frontDistance;
 extern int backDistance;
 
+extern bool Sensorcomplete;
+
 //Start and stop signal
 extern bool startProcess;
 //Time
