@@ -11,6 +11,8 @@
 #define YELLOW 0xC0
 #define GREEN 0x40
 
+extern bool Sensorcomplete = false;
+
 int frontStart = 0;
 int frontStop = 0;
 int backStart = 0;

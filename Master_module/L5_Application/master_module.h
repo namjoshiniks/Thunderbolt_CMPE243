@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <lpc_sys.h>
 #include "io.hpp"
 #include "_can_dbc/generated_can.h"
 #include "can.h"
@@ -30,7 +31,7 @@ void default_motor_state();
 
 void handle_motors_from_sensor_data();
 
-bool handle_start_stop_signal();
+bool handle_start_stop_signal(bool currentStatus);
 
 void handle_heartbeat_leds();
 

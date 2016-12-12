@@ -33,6 +33,7 @@
 #include "periodic_callback.h"
 #include "master_module.h"
 
+bool start=false;
 /// This is the stack size used for each of the period tasks (1Hz, 10Hz, 100Hz, and 1000Hz)
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
@@ -71,17 +72,21 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-	bool start = handle_start_stop_signal();
-	//start = true; // To work without start signal from Android app.
+	start = handle_start_stop_signal(start);
+//	bool start;
+//	start = true; // To work without start signal from Android app.
 	if(start)
 	{
 		handle_motors_from_sensor_data();
+		//printf("\nprint:1");
 	}
 	else
 	{
         //STOP
 		default_motor_state();
 	}
+	//printf("\nstatus:%d",start);
+
 }
 
 void period_100Hz(uint32_t count)
