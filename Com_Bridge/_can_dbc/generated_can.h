@@ -27,11 +27,12 @@ static const dbc_msg_hdr_t COM_BRIDGE_CHECK_POINT_HDR =           {  148, 8 };
 static const dbc_msg_hdr_t COM_BRIDGE_CLICKED_START_HDR =         {   84, 2 };
 static const dbc_msg_hdr_t COM_BRIDGE_HEARTBEAT_HDR =             {  340, 2 };
 static const dbc_msg_hdr_t COM_BRIDGE_STOPALL_HDR =               {    4, 2 };
+static const dbc_msg_hdr_t COM_BRIDGE_RESET_HDR =                 {    3, 2 };
 static const dbc_msg_hdr_t GPS_ACKNOWLEDGEMENT_HDR =              {  290, 2 };
 static const dbc_msg_hdr_t GPS_CURRENT_LOCATION_HDR =             {  162, 8 };
 // static const dbc_msg_hdr_t GPS_HEARTBEAT_HDR =                    {  338, 2 };
 // static const dbc_msg_hdr_t GPS_MASTER_DATA_HDR =                  {  146, 7 };
-static const dbc_msg_hdr_t GPS_COMPASS_HEADING_HDR =              {  300, 2 };
+static const dbc_msg_hdr_t GPS_COMPASS_HEADING_HDR =              {  300, 3 };
 // static const dbc_msg_hdr_t MASTER_ACKNOWLEDGEMENT_HDR =           {  281, 2 };
 static const dbc_msg_hdr_t MASTER_DRIVING_CAR_HDR =               {  209, 8 };
 static const dbc_msg_hdr_t MOTOR_CAR_SPEED_HDR =                  {  147, 4 };
@@ -42,21 +43,21 @@ static const dbc_msg_hdr_t SENSOR_SONARS_HDR =                    {  144, 8 };
 /// Enumeration(s) for Message: 'MASTER_DRIVING_CAR' from 'MASTER'
 typedef enum {
     DRIVE = 3,
-    REVERSE = 1,
     STOP = 2,
+    REVERSE = 1,
 } MASTER_DRIVE_ENUM_E ;
 
 typedef enum {
+    FAR_RIGHT = 1,
+    CENTER = 3,
     RIGHT = 2,
     FAR_LEFT = 5,
     LEFT = 4,
-    FAR_RIGHT = 1,
-    CENTER = 3,
 } MASTER_STEER_ENUM_E ;
 
 typedef enum {
-    LOW = 1,
     HIGH = 3,
+    LOW = 1,
     MEDIUM = 2,
 } MASTER_SPEED_ENUM_E ;
 
@@ -114,6 +115,14 @@ typedef struct {
 } COM_BRIDGE_STOPALL_t;
 
 
+/// Message: COM_BRIDGE_RESET from 'COM_BRIDGE', DLC: 2 byte(s), MID: 3
+typedef struct {
+    uint16_t COM_BRIDGE_RESET_UNSIGNED;       ///< B10:0   Destination: MASTER,GPS,MOTOR,SENSOR
+
+    // No dbc_mia_info_t for a message that we will send
+} COM_BRIDGE_RESET_t;
+
+
 /// Message: GPS_ACKNOWLEDGEMENT from 'GPS', DLC: 2 byte(s), MID: 290
 typedef struct {
     uint16_t GPS_ACKNOWLEDGEMENT_UNSIGNED;    ///< B10:0   Destination: COM_BRIDGE
@@ -131,7 +140,7 @@ typedef struct {
 } GPS_CURRENT_LOCATION_t;
 
 
-/// Message: GPS_COMPASS_HEADING from 'GPS', DLC: 2 byte(s), MID: 300
+/// Message: GPS_COMPASS_HEADING from 'GPS', DLC: 3 byte(s), MID: 300
 typedef struct {
     float GEO_DATA_COMPASS_HEADING_UNSIGNED;  ///< B15:0  Min: 0 Max: 359   Destination: COM_BRIDGE
 
@@ -342,6 +351,30 @@ static inline bool dbc_encode_and_send_COM_BRIDGE_STOPALL(COM_BRIDGE_STOPALL_t *
 
 
 
+/// Encode COM_BRIDGE's 'COM_BRIDGE_RESET' message
+/// @returns the message header of this message
+static inline dbc_msg_hdr_t dbc_encode_COM_BRIDGE_RESET(uint8_t bytes[8], COM_BRIDGE_RESET_t *from)
+{
+    uint32_t raw;
+    bytes[0]=bytes[1]=bytes[2]=bytes[3]=bytes[4]=bytes[5]=bytes[6]=bytes[7]=0;
+
+    raw = ((uint32_t)(((from->COM_BRIDGE_RESET_UNSIGNED)))) & 0x7ff;
+    bytes[0] |= (((uint8_t)(raw) & 0xff)); ///< 8 bit(s) starting from B0
+    bytes[1] |= (((uint8_t)(raw >> 8) & 0x07)); ///< 3 bit(s) starting from B8
+
+    return COM_BRIDGE_RESET_HDR;
+}
+
+/// Encode and send for dbc_encode_COM_BRIDGE_RESET() message
+static inline bool dbc_encode_and_send_COM_BRIDGE_RESET(COM_BRIDGE_RESET_t *from)
+{
+    uint8_t bytes[8];
+    const dbc_msg_hdr_t hdr = dbc_encode_COM_BRIDGE_RESET(bytes, from);
+    return dbc_app_send_can_msg(hdr.mid, hdr.dlc, bytes);
+}
+
+
+
 /// Not generating code for dbc_encode_GPS_ACKNOWLEDGEMENT() since the sender is GPS and we are COM_BRIDGE
 
 /// Not generating code for dbc_encode_GPS_CURRENT_LOCATION() since the sender is GPS and we are COM_BRIDGE
@@ -371,6 +404,8 @@ static inline bool dbc_encode_and_send_COM_BRIDGE_STOPALL(COM_BRIDGE_STOPALL_t *
 /// Not generating code for dbc_decode_COM_BRIDGE_HEARTBEAT() since 'COM_BRIDGE' is not the recipient of any of the signals
 
 /// Not generating code for dbc_decode_COM_BRIDGE_STOPALL() since 'COM_BRIDGE' is not the recipient of any of the signals
+
+/// Not generating code for dbc_decode_COM_BRIDGE_RESET() since 'COM_BRIDGE' is not the recipient of any of the signals
 
 /// Decode GPS's 'GPS_ACKNOWLEDGEMENT' message
 /// @param hdr  The header of the message to validate its DLC and MID; this can be NULL to skip this check

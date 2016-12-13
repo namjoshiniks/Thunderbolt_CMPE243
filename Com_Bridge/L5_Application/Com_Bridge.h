@@ -21,7 +21,9 @@ void Heartbeat();
 
 void DummyData(uint32_t count);
 
-void Reset();
+void Reset(uint32_t count);
+
+void MyReset(uint32_t count);
 
 void CAN_Receive();
 
@@ -35,10 +37,11 @@ void GPSDecode();
 
 void MasterDecode(uint32_t count);
 
-void StartStopCheckpoint();
+void StartStopCheckpoint(uint32_t count);
 
 void setupBT();
 
 void BT(void *p);
+
 
 #endif /* L5_APPLICATION_COM_BRIDGE_H_ */

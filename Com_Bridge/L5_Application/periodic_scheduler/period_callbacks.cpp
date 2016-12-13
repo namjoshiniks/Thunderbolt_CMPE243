@@ -77,12 +77,14 @@ void period_1Hz(uint32_t count)
 	BT(k);
 
 	//DummyData(count);
+	Reset(count);
+	MyReset(count);
 }
 
 void period_10Hz(uint32_t count)
 {
 
-	Reset();
+
 
 	CAN_Receive();
 
@@ -92,11 +94,9 @@ void period_10Hz(uint32_t count)
 
 	CompassDecode(count);
 
-	GPSDecode();
-
 	MasterDecode(count);
 
-	StartStopCheckpoint();
+	StartStopCheckpoint(count);
 
 
 
@@ -105,7 +105,7 @@ void period_10Hz(uint32_t count)
 void period_100Hz(uint32_t count)
 {
 
-
+	GPSDecode();
 
 
 }

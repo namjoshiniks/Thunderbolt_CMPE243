@@ -5,8 +5,6 @@
 #include <iomanip>
 #include <stdio.h>
 #include "io.hpp"
-//#include "periodic_callback.h"
-//#include "_can_dbc\generated_can.h"
 #include "can.h"
 
 #include <string>
@@ -43,6 +41,8 @@ bool isACK = false;
 bool isInitialLocation = false;
 bool isClickEnabled = false;
 bool isStopEnabled = false;
+bool myReset = false;
+int previousCount;
 COM_BRIDGE_CHECK_POINT_t m ={ 0 };
 COM_BRIDGE_HEARTBEAT_t hb = { 0 };
 COM_BRIDGE_STOPALL_t stopSig = { 0 };
@@ -52,6 +52,7 @@ COM_BRIDGE_CLICKED_START_t startSig = { 0 };
 MOTOR_CAR_SPEED_t motorData = { 0 };
 GPS_COMPASS_HEADING_t gpsCompass = { 0 };
 MASTER_DRIVING_CAR_t masterDriving;
+COM_BRIDGE_RESET_t resetCom = { 0 };
 int count1 = -1;
 int setCount = -1;
 const uint32_t                             GPS_CURRENT_LOCATION__MIA_MS = 3000;
@@ -96,7 +97,7 @@ void Heartbeat()
 	dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_HEARTBEAT(can_msg.data.bytes, &hb);
 	can_msg.msg_id = msg_hdr.mid;
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
-	CAN_tx(can1, &can_msg, 0);
+	bool fg = CAN_tx(can1, &can_msg, 0);
 }
 
 void DummyData(uint32_t count)
@@ -128,12 +129,30 @@ void DummyData(uint32_t count)
 
 }
 
-void Reset()
+void MyReset(uint32_t count)
+{
+	if(myReset && count == previousCount + 4)
+	{
+		myReset = false;
+		sys_reboot();
+	}
+}
+
+void Reset(uint32_t count)
 {
 	if(isReset)
 	{
+
+		can_msg = { 0 };
+		resetCom.COM_BRIDGE_RESET_UNSIGNED = COM_BRIDGE_RESET_HDR.mid;
+		dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_RESET(can_msg.data.bytes,&resetCom);
+		can_msg.msg_id = msg_hdr.mid;
+		cout << msg_hdr.mid << endl;
+		can_msg.frame_fields.data_len = msg_hdr.dlc;
+		CAN_tx(can1, &can_msg, 0);
 		isReset = false;
-		sys_reboot();
+		myReset = true;
+		previousCount = count;
 	}
 }
 
@@ -206,8 +225,8 @@ void MotorDecode(uint32_t count)
 void CompassDecode(uint32_t count)
 {
 	//if(gpsCompass.GEO_DATA_COMPASS_HEADING_UNSIGNED != 0 && count%5 == 0)
-	if(count%10 == 0)
-	{
+	//if(count)
+	//{
 		const char* s2 ;
 		ostringstream os1;
 		os1 <<  gpsCompass.GEO_DATA_COMPASS_HEADING_UNSIGNED;
@@ -218,7 +237,7 @@ void CompassDecode(uint32_t count)
 		s2 = compassValue.c_str();
 		u3->putline(s2);
 		//gpsCompass.GEO_DATA_COMPASS_HEADING_UNSIGNED = 0;
-	}
+	//}
 }
 
 void GPSDecode()
@@ -248,36 +267,36 @@ void GPSDecode()
 
 void MasterDecode(uint32_t count)
 {
-	if(masterDriving.MASTER_DRIVE_ENUM == DRIVE && count%10 == 0)
-	{
-	switch(masterDriving.MASTER_STEER_ENUM)
-	{
-	   case RIGHT:
-		   u3->putline("R*");
-		   break;
-	   case LEFT:
-		   u3->putline("L*");
-		   break;
-	   case FAR_RIGHT:
-		   u3->putline("R*");
-		   break;
-	   case FAR_LEFT:
-		   u3->putline("L*");
-		   break;
-	   case CENTER:
-		   u3->putline("F*");
-		   break;
-			}
-
-	}
-	else
-	{
-		u3->putline("S*");
-	}
+//	if(masterDriving.MASTER_DRIVE_ENUM == DRIVE && count%10 == 0)
+//	{
+//	switch(masterDriving.MASTER_STEER_ENUM)
+//	{
+//	   case RIGHT:
+//		   u3->putline("R*");
+//		   break;
+//	   case LEFT:
+//		   u3->putline("L*");
+//		   break;
+//	   case FAR_RIGHT:
+//		   u3->putline("R*");
+//		   break;
+//	   case FAR_LEFT:
+//		   u3->putline("L*");
+//		   break;
+//	   case CENTER:
+//		   u3->putline("F*");
+//		   break;
+//			}
+//
+//	}
+//	else
+//	{
+//		u3->putline("S*");
+//	}
 
 }
 
-void StartStopCheckpoint()
+void StartStopCheckpoint(uint32_t count)
 {
 	  if(isClickEnabled)
 	  {
@@ -310,21 +329,21 @@ void StartStopCheckpoint()
 		}
 		else
 		{
-			if(startSig.COM_BRIDGE_CLICKED_START_UNSIGNED)
+			if(startSig.COM_BRIDGE_CLICKED_START_UNSIGNED && count%20 )
 			{
 			 can_msg = { 0 };
 			 dbc_msg_hdr_t msg_hdr = dbc_encode_COM_BRIDGE_CLICKED_START(can_msg.data.bytes,&startSig);
 			 can_msg.msg_id = msg_hdr.mid;
 			 can_msg.frame_fields.data_len = msg_hdr.dlc;
 			 CAN_tx(can1, &can_msg, 0);
-			 startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = { 0 };
+			 //startSig.COM_BRIDGE_CLICKED_START_UNSIGNED = { 0 };
 			}
 
 		}
 	   }
 	 else
 	 {
-		   if(isStopEnabled)
+		   if(isStopEnabled && count%5)
 		   {
 			can_msg = { 0 };
 			stopSig.COM_BRIDGE_STOPALL_UNSIGNED = COM_BRIDGE_STOPALL_HDR.mid;
@@ -332,7 +351,7 @@ void StartStopCheckpoint()
 			can_msg.msg_id = msg_hdr.mid;
 			can_msg.frame_fields.data_len = msg_hdr.dlc;
 			CAN_tx(can1, &can_msg, 0);
-			isStopEnabled = false;
+			//isStopEnabled = false;
 		   }
 	 }
 
