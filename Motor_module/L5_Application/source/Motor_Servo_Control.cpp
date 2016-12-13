@@ -67,10 +67,10 @@ string Motor_Servo_Set(MASTER_DRIVING_CAR_t rcv_car)
 						 motor.set(7.9);
 					   break;
 					   case MEDIUM:
-						 motor.set(7.98);
+						 motor.set(8);
 					   break;
 					   case HIGH:
-						 motor.set(8.06);
+						 motor.set(8.09);
 						 break;
 					   default:
 						 break;
@@ -93,7 +93,7 @@ string Motor_Servo_Set(MASTER_DRIVING_CAR_t rcv_car)
 			   BL_RED_pin.setLow();
 			   if(count_initial<6)
 			   {
-				   motor.set(8.05);
+				   motor.set(8.1);
 				   count_initial++;
 			   }
 			   else
@@ -104,10 +104,10 @@ string Motor_Servo_Set(MASTER_DRIVING_CAR_t rcv_car)
 						 motor.set(7.9);
 					   break;
 					   case MEDIUM:
-						 motor.set(7.98);
+						 motor.set(8);
 					   break;
 					   case HIGH:
-						 motor.set(8.05);
+						 motor.set(8.09);
 						 break;
 					   default:
 						 break;
@@ -130,13 +130,13 @@ void setServoControl(MASTER_DRIVING_CAR_t rcv_car)
 		   case FAR_RIGHT:
 	           BL_IND_LEFT_pin.setLow();
 	           BL_IND_RIGHT_pin.setHigh();
-		       servo.set(10);
+		       servo.set(9.2);
 		       lcdServoDirection = "RIGHT";
 		       break;
 		   case RIGHT:
 			   BL_IND_LEFT_pin.setLow();
 			   BL_IND_RIGHT_pin.setHigh();
-		       servo.set(8.4);
+		       servo.set(8);
 		       lcdServoDirection = "RIGHT";
 		       break;
 		   case CENTER:
@@ -146,7 +146,7 @@ void setServoControl(MASTER_DRIVING_CAR_t rcv_car)
 		   case LEFT:
 			   BL_IND_LEFT_pin.setHigh();
 	           BL_IND_RIGHT_pin.setLow();
-		       servo.set(6.4);
+		       servo.set(6.1);
 		       lcdServoDirection = "LEFT";
 		       break;
 		   case FAR_LEFT:
@@ -158,6 +158,7 @@ void setServoControl(MASTER_DRIVING_CAR_t rcv_car)
 		   }
 
 }
+
 
 
 

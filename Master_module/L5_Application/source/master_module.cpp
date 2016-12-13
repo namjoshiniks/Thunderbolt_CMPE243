@@ -126,10 +126,14 @@ void default_motor_state()
 
 void handle_motors_from_sensor_data()
 {
+//	if((sensor_data.SENSOR_SONARS_FRONT_UNSIGNED == 8) && (sensor_data.SENSOR_SONARS_LEFT_UNSIGNED == 8) && (sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED == 8))
+//		{
+//			motor_drive = motor_drive_old;
+//		}
 
 	if(gps_data.GEO_DATA_ISFINAL_SIGNED == 0)
 	{
-			if(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED > 70)
+			if(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED > 50)
 			{
 				if(sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>35)
 				{
@@ -247,17 +251,14 @@ void handle_motors_from_sensor_data()
 	else
         motor_drive.MASTER_SPEED_ENUM =  HIGH;
 
-	if((sensor_data.SENSOR_SONARS_FRONT_UNSIGNED == 8) && (sensor_data.SENSOR_SONARS_LEFT_UNSIGNED == 8) && (sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED == 8))
-	{
-		motor_drive = motor_drive_old;
-	}
+
 	motor_drive_old = motor_drive;
 }
 
 void handle_can_rx(can_t can)
 {
 	dbc_msg_hdr_t msg_header;
-	if(CAN_rx(can, &rx_msg, 0))
+	while(CAN_rx(can, &rx_msg, 0))
 	{
 		msg_header.mid = rx_msg.msg_id;
 		msg_header.dlc = rx_msg.frame_fields.data_len;
@@ -273,9 +274,13 @@ void handle_can_rx(can_t can)
 		else if(msg_header.mid == SENSOR_SONARS_HDR.mid)
 		{
 			dbc_decode_SENSOR_SONARS(&sensor_data, rx_msg.data.bytes, &msg_header);
-			//printf("LEFT = %d\n", sensor_data.SENSOR_SONARS_LEFT_UNSIGNED);
-			//printf("RIGHT = %d\n", sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED);
-			//printf("CENTER = %d\n", sensor_data.SENSOR_SONARS_FRONT_UNSIGNED);
+//			printf("LEFT = %d\n", sensor_data.SENSOR_SONARS_LEFT_UNSIGNED);
+//			printf("RIGHT = %d\n", sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED);
+//			printf("CENTER = %d\n", sensor_data.SENSOR_SONARS_FRONT_UNSIGNED);
+			if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED<80)
+			{
+				LE.on(1);
+			}
 		}
 		else if(msg_header.mid == COM_BRIDGE_CLICKED_START_HDR.mid)
 			dbc_decode_COM_BRIDGE_CLICKED_START(&com_bridge_start, rx_msg.data.bytes, &msg_header);
@@ -292,7 +297,7 @@ void handle_can_rx(can_t can)
 //			printf("Final_dest = %f\n", gps_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED);
 //			printf("Next_checkpoint = %f\n", gps_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED);
 //			printf("Is final ?  = %d\n", gps_data.GEO_DATA_ISFINAL_SIGNED);
-//			printf("Turn angle  = %f\n", gps_data.GEO_DATA_TURNANGLE_SIGNED);
+			printf("Turn angle  = %f\n", gps_data.GEO_DATA_TURNANGLE_SIGNED);
 		}
 		else if(msg_header.mid == COM_BRIDGE_RESET_HDR.mid )
 		{
@@ -303,6 +308,7 @@ void handle_can_rx(can_t can)
 
 void handle_can_tx(can_t can)
 {
+//	printf("\n Driving Signal:%d %d %d",motor_drive.MASTER_DRIVE_ENUM,motor_drive.MASTER_SPEED_ENUM,motor_drive.MASTER_STEER_ENUM);
 	dbc_msg_hdr_t msg_header = dbc_encode_MASTER_DRIVING_CAR(tx_msg.data.bytes, &motor_drive);
 	tx_msg.msg_id = msg_header.mid;
 	tx_msg.frame_fields.data_len = msg_header.dlc;
@@ -333,7 +339,8 @@ void handle_mia()
 }
  void get_Geo_Decision()
  {
-     if(gps_data.GEO_DATA_TURNANGLE_SIGNED>40 && gps_data.GEO_DATA_TURNANGLE_SIGNED<70)
+
+     if(gps_data.GEO_DATA_TURNANGLE_SIGNED>30 && gps_data.GEO_DATA_TURNANGLE_SIGNED<70)
      {
 		motor_drive.MASTER_DRIVE_ENUM = DRIVE;
 		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
@@ -347,14 +354,14 @@ void handle_mia()
 		motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
 		LD.setNumber(5);
      }
-     else if(gps_data.GEO_DATA_TURNANGLE_SIGNED<-40 && gps_data.GEO_DATA_TURNANGLE_SIGNED>-70)
+     else if(gps_data.GEO_DATA_TURNANGLE_SIGNED<-30 && gps_data.GEO_DATA_TURNANGLE_SIGNED>-70)
 	  {
 		motor_drive.MASTER_DRIVE_ENUM = DRIVE;
 		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
 		motor_drive.MASTER_STEER_ENUM = LEFT;
 		LD.setNumber(2);
 	  }
-	  else if(gps_data.GEO_DATA_TURNANGLE_SIGNED<-70)
+	  else if(gps_data.GEO_DATA_TURNANGLE_SIGNED<=-70)
 	  {
 		motor_drive.MASTER_DRIVE_ENUM = DRIVE;
 		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
@@ -363,9 +370,37 @@ void handle_mia()
 	  }
 	  else
 	  {
-		motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		motor_drive.MASTER_STEER_ENUM = CENTER;
-		LD.setNumber(1);
+		  if(gps_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED < 15)
+		  {
+			  if(gps_data.GEO_DATA_TURNANGLE_SIGNED<0)
+			  {
+				motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+				motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+				motor_drive.MASTER_STEER_ENUM = LEFT;
+				LD.setNumber(1);
+
+			  }
+			  else if(gps_data.GEO_DATA_TURNANGLE_SIGNED>0)
+			  {
+				motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+				motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+				motor_drive.MASTER_STEER_ENUM = RIGHT;
+				LD.setNumber(1);
+			  }
+			  else
+			  {
+				motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+				motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+				motor_drive.MASTER_STEER_ENUM = CENTER;
+				LD.setNumber(1);
+			  }
+		  }
+		  else
+		  {
+			motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+			motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+			motor_drive.MASTER_STEER_ENUM = CENTER;
+			LD.setNumber(1);
+		  }
 	  }
  }

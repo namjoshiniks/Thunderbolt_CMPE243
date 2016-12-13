@@ -171,7 +171,7 @@ void processLineTwo(int leftVal, int frontVal, int rightVal, int backVal)
 	ss4 << backVal;
 	backString = ss4.str();
 	sensorBuffer = "L: " + leftString + " F: " + frontString + " R: " + rightString;
-	cout<<sensorBuffer<<endl;
+	//cout<<sensorBuffer<<endl;
 	displayString(sensorBuffer);
 	//scroll(sensorBuffer);
 //	if(countVal1 > 19)
@@ -221,8 +221,8 @@ void processLineThree(string direction, int speed)
    // cout<<motorBuffer1<<endl;
 	//sprintf(motorBuffer, "%s Speed:%d",direction, speed);
 	displayString(motorBuffer1);
-	cout<<direction<<endl;
-	cout<<motorBuffer1<<endl;
+//	cout<<direction<<endl;
+//	cout<<motorBuffer1<<endl;
 	//clearLine(LINE_FOUR_END);
     //scroll(motorBuffer1);
 }
@@ -259,6 +259,7 @@ void refreshLcd(void)
 //	processLineTwo(left_data, front_data, right_data, back_data);
 //	processLineThree(dir_data, rpm_data);
 }
+
 
 
 

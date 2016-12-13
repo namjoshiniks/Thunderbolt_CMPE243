@@ -91,9 +91,11 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
-	handle_can_rx(can1);
-	handle_mia();
-	handle_can_tx(can1);
+
+		handle_can_rx(can1);
+		handle_mia();
+		handle_can_tx(can1);
+
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():
