@@ -49,6 +49,7 @@ bool period_init(void)
 {
 	can_init_func();
 	uart2_init();
+	LD.setNumber(00);
 	return true; // Must return true upon success
 }
 
@@ -69,7 +70,6 @@ void period_1Hz(uint32_t count)
 {
 	heartbeat();
 	can_reset();
-	sendCurrentLocation();
 	sendCompassReadingToCom();
 
 }
@@ -77,10 +77,10 @@ void period_1Hz(uint32_t count)
 void period_10Hz(uint32_t count)
 {
 	getCompassReadings();
-	compassCalibration();
 	getDataFromGPS();
 	parseGPSdata();
 	toDecimalDegrees();
+	sendCurrentLocation();
 	sendtoMaster();
 }
 
@@ -88,7 +88,6 @@ void period_100Hz(uint32_t count)
 {
 	recieveAndSaveCheckpoints();
 	acknowledgmentTocb();
-
 }
 
 // 1Khz (1ms) is only run if Periodic Dispatcher was configured to run it at main():

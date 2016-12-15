@@ -25,7 +25,9 @@
  */
 #include "tasks.hpp"
 #include "examples/examples.hpp"
-
+#include "io.hpp"
+#include "i2c2.hpp"
+#include "utilities.h"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -41,6 +43,40 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
+void compass(void * p)
+{
+	I2C2& i2c2 = I2C2::getInstance();
+	const uint8_t dev_address = 0xC0;
+	uint8_t reg_address = 0x00;
+	while(1)
+	{
+		if(SW.getSwitch(1))
+		{
+			i2c2.writeReg(dev_address,reg_address,0xF0);
+			delay_ms(20);
+			i2c2.writeReg(dev_address,reg_address,0xF5);
+			delay_ms(20);
+			i2c2.writeReg(dev_address,reg_address,0xF6);
+			delay_ms(20);
+		}
+
+		if(SW.getSwitch(2))
+		{
+			i2c2.writeReg(dev_address,reg_address,0xF8);
+			delay_ms(20);
+		}
+		if(SW.getSwitch(3))
+		{
+			i2c2.writeReg(dev_address,reg_address,0x20);
+			delay_ms(20);
+			i2c2.writeReg(dev_address,reg_address,0x2A);
+			delay_ms(20);
+			i2c2.writeReg(dev_address,reg_address,0x60);
+			delay_ms(20);
+		}
+	}
+}
+
 int main(void)
 {
 	/**
@@ -58,6 +94,7 @@ int main(void)
 	/* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
 	scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
+	xTaskCreate(compass, "gps_task", STACK_BYTES(2048), 0, 1, 0);
 	/* Change "if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
 #if 1
 	const bool run_1Khz = false;

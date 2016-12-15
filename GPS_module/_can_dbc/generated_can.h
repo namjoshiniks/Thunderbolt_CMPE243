@@ -27,7 +27,7 @@ static const dbc_msg_hdr_t COM_BRIDGE_CHECK_POINT_HDR =           {  148, 8 };
 static const dbc_msg_hdr_t COM_BRIDGE_CLICKED_START_HDR =         {   84, 2 };
 // static const dbc_msg_hdr_t COM_BRIDGE_HEARTBEAT_HDR =             {  340, 2 };
 // static const dbc_msg_hdr_t COM_BRIDGE_STOPALL_HDR =               {    4, 2 };
-static const dbc_msg_hdr_t COM_BRIDGE_RESET_HDR =                 {   10, 2 };
+static const dbc_msg_hdr_t COM_BRIDGE_RESET_HDR =                 {    3, 2 };
 static const dbc_msg_hdr_t GPS_ACKNOWLEDGEMENT_HDR =              {  290, 2 };
 static const dbc_msg_hdr_t GPS_CURRENT_LOCATION_HDR =             {  162, 8 };
 static const dbc_msg_hdr_t GPS_HEARTBEAT_HDR =                    {  338, 2 };
@@ -78,7 +78,7 @@ typedef struct {
 } COM_BRIDGE_CLICKED_START_t;
 
 
-/// Message: COM_BRIDGE_RESET from 'COM_BRIDGE', DLC: 2 byte(s), MID: 10
+/// Message: COM_BRIDGE_RESET from 'COM_BRIDGE', DLC: 2 byte(s), MID: 3
 typedef struct {
     uint16_t COM_BRIDGE_RESET_UNSIGNED;       ///< B10:0   Destination: MASTER,GPS,MOTOR,SENSOR
 
