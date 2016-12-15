@@ -7,6 +7,7 @@
 #include "stdio.h"
 #include "io.hpp"
 #include "uart2.hpp"
+#include "uart3.hpp"
 #include "utilities.h"
 //#include "L5_Application/periodic_scheduler/periodic_callback.h"
 #include <string>
@@ -20,6 +21,8 @@ void processLineTwo(int leftVal, int frontVal, int rightVal, int backVal);
 void processLineThree(string direction, int speed);
 void processLineFour(float, float, float);
 void setupLcd(void);
+void initGlcd(void);
+void setupGlcd(char16_t a, char16_t b, char16_t c, char16_t d, char16_t e);
 void refreshLcd(void);
 
 
