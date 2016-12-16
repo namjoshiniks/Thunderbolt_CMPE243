@@ -262,20 +262,20 @@ void initGlcd(void)
 	u3.init(9600,100,100);
 }
 
-void setupGlcd(char16_t a, char16_t b, char16_t c, char16_t d, char16_t e)
+void setupGlcd(char a, char b, char c, char d, char e)
 {
-	char16_t graphicLcdData[6] = {a,b,c,d,e,0};
-	char checksum = 0;
+	char graphicLcdData[6] = {a,b,c,d,e,0};
+	//char checksum = 0;
 	//printf("Cmd ");
 	//graphicLcdData = {a,b,c,d,e};
 	for(int i = 0; i <= 4; i++)
 	{
 		graphicLcdData[5] ^= graphicLcdData[i];
 		u3.putChar(graphicLcdData[i]);
-		//printf(" %x ", graphicLcdData[i]);
+		printf(" %x ", graphicLcdData[i]);
 	}
 	u3.putChar(graphicLcdData[5] );
-	//printf("%x\n",graphicLcdData[5] );
+	printf("%x\n",graphicLcdData[5] );
 }
 
 void refreshLcd(void)

@@ -118,11 +118,19 @@ void period_10Hz(uint32_t count)
 
 	if(count%5==0)
 	{
-//		gps_data.GEO_DATA_TURNANGLE_SIGNED = -30;
+//		gps_data.GEO_DATA_TURNANGLE_SIGNED = 180;
 //		RPM_Speed = 12;
 		compassAngle = 180 + (int)gps_data.GEO_DATA_TURNANGLE_SIGNED;
-		//printf("compassAngle : %d\n",compassAngle);
-		setupGlcd(0x01, 0x08, 0x01, 0x00, compassAngle);
+//		printf("compassAngle : %ld\n",compassAngle);
+		if(compassAngle > 255)
+		{
+			setupGlcd(0x01, 0x08, 0x01, 0x01,(char)compassAngle%100);
+		}
+		else
+		{
+			setupGlcd(0x01, 0x08, 0x01, 0x00, compassAngle);
+		}
+
 		setupGlcd(0x01, 0x10, 0x00, 0x00, (int)RPM_Speed);
 	}
 
