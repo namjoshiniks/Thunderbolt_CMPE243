@@ -272,10 +272,10 @@ void setupGlcd(char a, char b, char c, char d, char e)
 	{
 		graphicLcdData[5] ^= graphicLcdData[i];
 		u3.putChar(graphicLcdData[i]);
-		printf(" %x ", graphicLcdData[i]);
+		//printf(" %x ", graphicLcdData[i]);
 	}
 	u3.putChar(graphicLcdData[5] );
-	printf("%x\n",graphicLcdData[5] );
+	//printf("%x\n",graphicLcdData[5] );
 }
 
 void refreshLcd(void)

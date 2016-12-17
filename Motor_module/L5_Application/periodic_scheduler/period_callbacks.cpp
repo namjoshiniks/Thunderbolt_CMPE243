@@ -82,6 +82,7 @@ void period_1Hz(uint32_t count)
     processLineTwo(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED, sensor_data.SENSOR_SONARS_FRONT_UNSIGNED, sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED, sensor_data.SENSOR_SONARS_BACK_UNSIGNED);
     processLineThree(lcdCarDirection, (int)RPM_Speed);
     processLineFour(gps_data.GEO_DATA_TURNANGLE_SIGNED, gps_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED, gps_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED);
+	//setupGlcd(0x01, 0x07, 0x00, 0x00, (int)RPM_Speed);
 }
 
 void period_10Hz(uint32_t count)
@@ -93,7 +94,7 @@ void period_10Hz(uint32_t count)
 	}
 	if(!(count%5))
 		RPM_Speed=wheel_rotation_count * 12;
-	magnet_count+=wheel_rotation_count;
+		magnet_count+=wheel_rotation_count;
 //	printf("RPM: %f",RPM_Speed);
 
 	if (rcv_car.MASTER_DRIVE_ENUM != STOP)
@@ -118,20 +119,29 @@ void period_10Hz(uint32_t count)
 
 	if(count%5==0)
 	{
-//		gps_data.GEO_DATA_TURNANGLE_SIGNED = 180;
-//		RPM_Speed = 12;
+//		gps_data.GEO_DATA_TURNANGLE_SIGNED = 90;
+//		RPM_Speed = 24.8;
 		compassAngle = 180 + (int)gps_data.GEO_DATA_TURNANGLE_SIGNED;
 //		printf("compassAngle : %ld\n",compassAngle);
+
 		if(compassAngle > 255)
 		{
-			setupGlcd(0x01, 0x08, 0x01, 0x01,(char)compassAngle%100);
+			//setupGlcd(0x01, 0x08, 0x01, 0x01,(char)compassAngle%100); //old
+			//setupGlcd(0x01, 0x0A, 0x01, 0x00, 0x00);  //form 0
+			setupGlcd(0x01, 0x08, 0x00, 0x01, ((char)compassAngle)%100); //new compass
+
 		}
 		else
 		{
-			setupGlcd(0x01, 0x08, 0x01, 0x00, compassAngle);
+			//setupGlcd(0x01, 0x08, 0x01, 0x00, compassAngle); //old
+			setupGlcd(0x01, 0x08, 0x00, 0x00, (char)compassAngle);
 		}
 
-		setupGlcd(0x01, 0x10, 0x00, 0x00, (int)RPM_Speed);
+		//setupGlcd(0x01, 0x10, 0x00, 0x00, (int)RPM_Speed); // old
+		//setupGlcd(0x01, 0x07, 0x00, 0x00, 0x00); // form 1
+		setupGlcd(0x01, 0x07, 0x00, 0x00, (int)RPM_Speed); //new angular
+		setupGlcd(0x01, 0x0F, 0x00, 0x00, (int)RPM_Speed); //new speed digit
+
 	}
 
     motor_speed.MOTOR_DISTANCE_FROM_START_POINT_UNSIGNED = Odometer;
