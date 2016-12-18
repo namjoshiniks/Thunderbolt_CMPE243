@@ -14,7 +14,8 @@
 #define SEC_PER_MINUTE 60.0
 
 /* Temporary strings */
-string temp1, temp2, temp3, temp4, temp5, temp6,temp11 , temp12 , temp13 ,temp14 , temp15, temp16;
+string temp1, temp2, temp3, temp4, temp5, temp6,temp11 , temp12 ,
+temp13 ,temp14 , temp15, temp16;
 string deg ="";
 
 /* Com-bridge reset */
@@ -59,6 +60,8 @@ bool AcknowledgmentSent=false;
 
 /* Total checkpoint sent by COM_BRIDGE */
 int TotalCheckpointCount = 0 ;
+double distanceToFinal = 0;
+double distanceOfCheckpointToFinal = 0;
 
 /* MIA handling of COM_BRIDGE */
 const uint32_t COM_BRIDGE_RESET__MIA_MS = 3000;
@@ -191,7 +194,8 @@ double bearing(double Lat1,double Lat2,double Long1,double Long2)
 {
 	double dLong = Long2 - Long1;
 	double arg1 = sin (dLong) * cos (Lat2);
-	double arg2 = ((cos (Lat1) *  sin(Lat2)) - ( sin (Lat1) * cos(Lat2) * cos(dLong)));
+	double arg2 = ((cos (Lat1) *  sin(Lat2)) - ( sin (Lat1) * cos(Lat2) *
+			cos(dLong)));
 	turn_angle1 = atan2(arg1 , arg2);
 	turn_angle2 = toDegree(turn_angle1);
 
@@ -380,7 +384,8 @@ void sendCurrentLocation()
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
 	if(CAN_tx(can1, &can_msg, 0))
 	{
-		printf ("Current location \n lat= %lf \n long= %lf \n", latitude_dcm, longitude_dcm  );
+		printf ("Current location \n lat= %lf \n long= %lf \n", latitude_dcm,
+				longitude_dcm  );
 	}
 
 }
@@ -397,7 +402,8 @@ void recieveAndSaveCheckpoints()
 	{
 		can_msg_hdr.dlc = msg.frame_fields.data_len;
 		can_msg_hdr.mid = msg.msg_id;
-		dbc_decode_COM_BRIDGE_CHECK_POINT(&checkpoint_can_msg ,msg.data.bytes, &can_msg_hdr);
+		dbc_decode_COM_BRIDGE_CHECK_POINT(&checkpoint_can_msg ,msg.data.bytes,
+				&can_msg_hdr);
 		if(can_msg_hdr.mid == COM_BRIDGE_CHECK_POINT_HDR.mid)
 		{
 			TotalCheckpointCount = checkpoint_can_msg.m0.COM_BRIDGE_TOTAL_COUNT_UNSIGNED;
@@ -421,8 +427,10 @@ void recieveAndSaveCheckpoints()
 		if(!(checkPoints[latitude_number].isLattitudeAdded))
 		{
 			checkPoints[latitude_number].isLattitudeAdded = true;
-			checkPoints[latitude_number].TotalCount = checkpoint_can_msg.m0.COM_BRIDGE_TOTAL_COUNT_UNSIGNED;
-			checkPoints[latitude_number].lattitude = checkpoint_can_msg.m0.COM_BRIDGE_LATTITUDE_SIGNED;
+			checkPoints[latitude_number].TotalCount =
+					checkpoint_can_msg.m0.COM_BRIDGE_TOTAL_COUNT_UNSIGNED;
+			checkPoints[latitude_number].lattitude =
+					checkpoint_can_msg.m0.COM_BRIDGE_LATTITUDE_SIGNED;
 			totalLatitudeReceived++;
 		}
 		checkpoint_can_msg.m0.COM_BRIDGE_LATTITUDE_SIGNED = 0;
@@ -434,8 +442,10 @@ void recieveAndSaveCheckpoints()
 		if(!(checkPoints[longitude_number].isLongitudeAdded))
 		{
 			checkPoints[longitude_number].isLongitudeAdded = true;
-			checkPoints[longitude_number].TotalCount = checkpoint_can_msg.m1.COM_BRIDGE_TOTAL_COUNT_UNSIGNED;
-			checkPoints[longitude_number].longitude = checkpoint_can_msg.m1.COM_BRIDGE_LONGITUDE_SIGNED;
+			checkPoints[longitude_number].TotalCount =
+					checkpoint_can_msg.m1.COM_BRIDGE_TOTAL_COUNT_UNSIGNED;
+			checkPoints[longitude_number].longitude =
+					checkpoint_can_msg.m1.COM_BRIDGE_LONGITUDE_SIGNED;
 			totalLongitudeReceived++;
 		}
 		checkpoint_can_msg.m1.COM_BRIDGE_LONGITUDE_SIGNED = 0;
@@ -448,7 +458,9 @@ void recieveAndSaveCheckpoints()
 void acknowledgmentTocb()
 {
 
-	if(totalLongitudeReceived == TotalCheckpointCount+1 && totalLatitudeReceived == TotalCheckpointCount+1 && TotalCheckpointCount)
+	if(totalLongitudeReceived == TotalCheckpointCount+1 &&
+			totalLatitudeReceived == TotalCheckpointCount+1 &&
+			TotalCheckpointCount)
 	{
 
 		ackToComBridge.GPS_ACKNOWLEDGEMENT_UNSIGNED = GPS_ACKNOWLEDGEMENT_HDR.mid;
@@ -473,32 +485,48 @@ void sendtoMaster()
 {
 	if(AcknowledgmentSent )
 	{
-		double distanceToFinal = distanceCalculation(latitude_dcm,checkPoints[TotalCheckpointCount].lattitude,longitude_dcm,checkPoints[TotalCheckpointCount].longitude);
+		distanceToFinal =
+				distanceCalculation(latitude_dcm,checkPoints[TotalCheckpointCount].lattitude,longitude_dcm,checkPoints[TotalCheckpointCount].longitude);
 		master_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED = distanceToFinal;
-		master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED = distanceCalculation(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
-		double distanceOfCheckpointToFinal = distanceCalculation(checkPoints[checkPointNumber].lattitude,checkPoints[TotalCheckpointCount].lattitude,checkPoints[checkPointNumber].longitude,checkPoints[TotalCheckpointCount].longitude);
-		master_data.GEO_DATA_TURNANGLE_SIGNED = bearing(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
-		distanceToNextCheckpoint = distanceCalculation(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
+		distanceToNextCheckpoint =
+				distanceCalculation(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
+		master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED =
+				distanceToNextCheckpoint;
+		distanceOfCheckpointToFinal =
+				distanceCalculation(checkPoints[checkPointNumber].lattitude,checkPoints[TotalCheckpointCount].lattitude,checkPoints[checkPointNumber].longitude,checkPoints[TotalCheckpointCount].longitude);
+		master_data.GEO_DATA_TURNANGLE_SIGNED =
+				bearing(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
+		distanceToNextCheckpoint =
+				distanceCalculation(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
 
-		if(distanceToFinal <= 3 )
+		if(distanceToFinal <= 10 )
 		{
 			isFinal = 1;
 			master_data.GEO_DATA_ISFINAL_SIGNED = isFinal;
 
 		}
 
-		if(((master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED<=3) && !isFinal) ||((distanceOfCheckpointToFinal > distanceToFinal) && !isFinal) )
+		if(((distanceToNextCheckpoint <= 10) && !isFinal)
+				||((distanceOfCheckpointToFinal > distanceToFinal) && !isFinal) )
 		{
+			master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED =
+					distanceCalculation(latitude_dcm,checkPoints[checkPointNumber +
+																 1].lattitude,longitude_dcm,checkPoints[checkPointNumber +
+																										1].longitude);
+			master_data.GEO_DATA_TURNANGLE_SIGNED =
+					bearing(latitude_dcm,checkPoints[checkPointNumber +
+													 1].lattitude,longitude_dcm,checkPoints[checkPointNumber +
+																							1].longitude);
 			checkPointNumber++;
 			LD.setNumber(checkPointNumber);
-			master_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED = distanceCalculation(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
-			master_data.GEO_DATA_TURNANGLE_SIGNED = bearing(latitude_dcm,checkPoints[checkPointNumber].lattitude,longitude_dcm,checkPoints[checkPointNumber].longitude);
+
 		}
 		msg_hdr = dbc_encode_GPS_MASTER_DATA(can_msg.data.bytes, &master_data);
 		can_msg.msg_id = msg_hdr.mid;
 		can_msg.frame_fields.data_len = msg_hdr.dlc;
 		CAN_tx(can1, &can_msg, 0);
 	}
+
 	if(isFinal)
 	{
 		LD.setRightDigit(9);
@@ -525,11 +553,11 @@ void getCompassReadings()
  */
 void sendCompassReadingToCom()
 {
-	compassTocom.GEO_DATA_COMPASS_HEADING_UNSIGNED = (double)((int)(final_Reading*10))/10;
+	compassTocom.GEO_DATA_COMPASS_HEADING_UNSIGNED =
+			(double)((int)(final_Reading*10))/10;
 	msg_hdr = dbc_encode_GPS_COMPASS_HEADING(can_msg.data.bytes, &compassTocom);
 	can_msg.msg_id = msg_hdr.mid;
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
 	CAN_tx(can1, &can_msg, 0);
 
 }
-
