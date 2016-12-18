@@ -94,7 +94,7 @@ int main(void)
 	/* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
 	scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));
 
-	xTaskCreate(compass, "gps_task", STACK_BYTES(2048), 0, 1, 0);
+	//xTaskCreate(compass, "gps_task", STACK_BYTES(2048), 0, 1, 0);
 	/* Change "if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
 #if 1
 	const bool run_1Khz = false;

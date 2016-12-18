@@ -554,7 +554,7 @@ void getCompassReadings()
 void sendCompassReadingToCom()
 {
 	compassTocom.GEO_DATA_COMPASS_HEADING_UNSIGNED =
-			(double)((int)(final_Reading*10))/10;
+	(double)((int)(final_Reading*10))/10;
 	msg_hdr = dbc_encode_GPS_COMPASS_HEADING(can_msg.data.bytes, &compassTocom);
 	can_msg.msg_id = msg_hdr.mid;
 	can_msg.frame_fields.data_len = msg_hdr.dlc;
