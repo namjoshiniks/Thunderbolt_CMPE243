@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 
+Uart3 &u3 = Uart3::getInstance();
 Uart2 &u2 = Uart2::getInstance();
 char lcd_init=0xFE;
 char lcd_clear=0x51;
@@ -20,6 +21,8 @@ string leftString, rightString, frontString, backString;
 string motorBuffer1;
 
 string thunderbolt_string="    THUNDERBOLT";
+
+
 
 enum NEW_LINE
 {
@@ -171,7 +174,7 @@ void processLineTwo(int leftVal, int frontVal, int rightVal, int backVal)
 	ss4 << backVal;
 	backString = ss4.str();
 	sensorBuffer = "L: " + leftString + " F: " + frontString + " R: " + rightString;
-	//cout<<sensorBuffer<<endl;
+	cout<<sensorBuffer<<endl;
 	displayString(sensorBuffer);
 	//scroll(sensorBuffer);
 //	if(countVal1 > 19)
@@ -221,8 +224,8 @@ void processLineThree(string direction, int speed)
    // cout<<motorBuffer1<<endl;
 	//sprintf(motorBuffer, "%s Speed:%d",direction, speed);
 	displayString(motorBuffer1);
-//	cout<<direction<<endl;
-//	cout<<motorBuffer1<<endl;
+	cout<<direction<<endl;
+	cout<<motorBuffer1<<endl;
 	//clearLine(LINE_FOUR_END);
     //scroll(motorBuffer1);
 }
@@ -254,12 +257,32 @@ void setupLcd(void)
 
 }
 
+void initGlcd(void)
+{
+	u3.init(9600,100,100);
+}
+
+void setupGlcd(char a, char b, char c, char d, char e)
+{
+	char graphicLcdData[6] = {a,b,c,d,e,0};
+	//char checksum = 0;
+	//printf("Cmd ");
+	//graphicLcdData = {a,b,c,d,e};
+	for(int i = 0; i <= 4; i++)
+	{
+		graphicLcdData[5] ^= graphicLcdData[i];
+		u3.putChar(graphicLcdData[i]);
+		//printf(" %x ", graphicLcdData[i]);
+	}
+	u3.putChar(graphicLcdData[5] );
+	//printf("%x\n",graphicLcdData[5] );
+}
+
 void refreshLcd(void)
 {
 //	processLineTwo(left_data, front_data, right_data, back_data);
 //	processLineThree(dir_data, rpm_data);
 }
-
 
 
 
