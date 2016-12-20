@@ -22,12 +22,13 @@ MASTER_DRIVING_CAR_t rcv_car={STOP,CENTER,MEDIUM};;
 SENSOR_SONARS_t sensor_data = {0};
 GPS_MASTER_DATA_t gps_data = {0};
 SENSOR_SONARS_t sensor_old_data = {0};
+MASTER_DRIVING_CAR_t old_state = {STOP, CENTER, MEDIUM};
 
 MOTOR_HEARTBEAT_t motor_heartbeat = {0};
 MOTOR_CAR_SPEED_t motor_speed = {0};
 
 const uint32_t      MASTER_DRIVING_CAR__MIA_MS = 3000;
-const MASTER_DRIVING_CAR_t    MASTER_DRIVING_CAR__MIA_MSG = {DRIVE,CENTER,MEDIUM};
+const MASTER_DRIVING_CAR_t    MASTER_DRIVING_CAR__MIA_MSG = old_state;
 const uint32_t                          GPS_MASTER_DATA__MIA_MS = 3000;
 const GPS_MASTER_DATA_t                 GPS_MASTER_DATA__MIA_MSG = {0};
 const uint32_t                          SENSOR_SONARS__MIA_MS = 3000;
@@ -87,14 +88,13 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-
 	if(count<12)
 	{
 	   rcv_car.MASTER_DRIVE_ENUM = STOP;
 	}
 	if(!(count%5))
-		RPM_Speed=wheel_rotation_count * 12;
-		magnet_count+=wheel_rotation_count;
+	RPM_Speed=wheel_rotation_count * 12;
+	magnet_count+=wheel_rotation_count;
 //	printf("RPM: %f",RPM_Speed);
 
 	if (rcv_car.MASTER_DRIVE_ENUM != STOP)
@@ -163,7 +163,9 @@ void period_100Hz(uint32_t count)
 				if(msg_header.mid == MASTER_DRIVING_CAR_HDR.mid)
 				{
 					dbc_decode_MASTER_DRIVING_CAR(&rcv_car,msg.data.bytes,&msg_header);
+					old_state = rcv_car;
 				}
+
 				else if(msg_header.mid == SENSOR_SONARS_HDR.mid)
 				{
 					dbc_decode_SENSOR_SONARS(&sensor_data, msg.data.bytes,&msg_header);
