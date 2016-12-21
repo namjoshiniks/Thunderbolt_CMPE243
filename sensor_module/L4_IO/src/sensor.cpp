@@ -11,7 +11,7 @@
 #define YELLOW 0xC0
 #define GREEN 0x40
 
-extern bool Sensorcomplete = false;
+COM_BRIDGE_RESET_t com_can_msg_t;
 
 int frontStart = 0;
 int frontStop = 0;
@@ -56,28 +56,6 @@ void updateCANsonar(SENSOR_SONARS_t *CAN_sensor)
 	*CAN_sensor = sensor_data;
 }
 
-
-//bool initializeRX_1()
-//{
-//    static GPIO *Sensor_Input = new GPIO(P0_30);
-//    Sensor_Input->setAsOutput();
-//    Sensor_Input->setHigh();
-//    vTaskDelay(250);
-//    Sensor_Input->setLow();
-//    delete Sensor_Input;
-//    return true;
-//}
-//
-//bool initializeRX_2()
-//{
-//	static GPIO *Sensor_Input = new GPIO(P0_29);
-//	Sensor_Input->setAsOutput();
-//	Sensor_Input->setHigh();
-//	vTaskDelay(250);
-//	Sensor_Input->setLow();
-//	delete Sensor_Input;
-//	return true;
-//}
 
 void frontstartTimer(void)
 {
@@ -135,3 +113,37 @@ void enableHeadlights()
 		}
 }
 
+void receive_COM_reset()
+{
+	//Receiver code
+		static can_msg_t can_msg;
+		while (CAN_rx(can1, &can_msg, 0))
+		{
+			static dbc_msg_hdr_t COM_bridge_reset_can_msg;
+			// Form the message header from the metadata of the arriving message
+			dbc_msg_hdr_t can_msg_hdr;
+			can_msg_hdr.dlc = can_msg.frame_fields.data_len;
+			can_msg_hdr.mid = can_msg.msg_id;
+
+			// Attempt to decode the message (brute force, but should use switch/case with MID)
+			dbc_decode_COM_BRIDGE_RESET(&com_can_msg_t, can_msg.data.bytes, &can_msg_hdr);
+			if(can_msg_hdr.mid == COM_BRIDGE_RESET_HDR.mid)
+			{
+				sys_reboot();
+			}
+		}
+}
+
+void sensor_send_heartbeat()
+{
+	LE.off(4);
+	static SENSOR_HEARTBEAT_t sensor_heartbeat;
+	sensor_heartbeat.SENSOR_HEARTBEAT_UNSIGNED = 336;
+
+	can_msg_t can_msg = {0};
+
+	// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
+	dbc_msg_hdr_t msg_hdr = dbc_encode_SENSOR_HEARTBEAT(can_msg.data.bytes, &sensor_heartbeat);
+	can_msg.msg_id = msg_hdr.mid;
+	can_msg.frame_fields.data_len = msg_hdr.dlc;
+}
