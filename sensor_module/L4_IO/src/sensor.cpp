@@ -120,65 +120,10 @@ void rightstopTimer(void)
     rightDistance = rightStop/147;
 }
 
-void sendLEDmessage(int distance1, int distance2, int distance3)
-{
-	//get LED information from sensors
-	uint8_t leftLED, frontLED, rightLED;
-
-	if(leftDistance < 20)
-	{
-		leftLED = RED;
-	}
-	else if(leftDistance >=20 && leftDistance < 50)
-	{
-		leftLED = YELLOW;
-	}
-	else
-	{
-		leftLED = GREEN;
-	}
-
-	if(frontDistance < 20)
-	{
-		frontLED = RED;
-	}
-	else if(frontDistance >=20 && frontDistance < 50)
-	{
-		frontLED = YELLOW;
-	}
-	else
-	{
-		frontLED = GREEN;
-	}
-
-	if(rightDistance < 20)
-	{
-		rightLED = RED;
-	}
-	else if(rightDistance >=20 && rightDistance < 50)
-	{
-		rightLED = YELLOW;
-	}
-	else
-	{
-		rightLED = GREEN;
-	}
-
-	//combine LEDs into one byte
-	uint8_t LEDmessage = leftLED | (frontLED>>2) | (rightLED>>4);
-
-	static GPIO *chip_select = new GPIO(P1_19);
-	chip_select->setAsOutput();
-	chip_select->setLow();
-
-	//send LED data, 8 bit shift register
-	ssp1_exchange_byte(LEDmessage);
-	chip_select->setHigh();
-}
 
 void enableHeadlights()
 {
-	static GPIO *headlights = new GPIO(P1_19);
+	static GPIO *headlights = new GPIO(P1_22);
 		headlights->setAsOutput();
 		if(LS.getPercentValue() <= 10)
 		{
