@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "periodic_scheduler/periodic_callback.h"
+#include <iostream>
 
 void *k;
 //void setupBT();
@@ -53,6 +54,7 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+
    	init_periodic();
     return true; // Must return true upon success
 }
@@ -90,11 +92,12 @@ void period_10Hz(uint32_t count)
 
 	Handle_MiaMsg();
 
-	//MotorDecode(count);
+	GPSDecode();
+
+	MotorDecode(count);
 
 	CompassDecode(count);
 
-	MasterDecode(count);
 
 	StartStopCheckpoint(count);
 
@@ -104,9 +107,6 @@ void period_10Hz(uint32_t count)
 
 void period_100Hz(uint32_t count)
 {
-
-	GPSDecode();
-
 
 }
 
