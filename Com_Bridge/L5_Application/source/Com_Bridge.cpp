@@ -32,6 +32,7 @@ string compassValue1 = "13.6&";
 long double currentLoc[2];
 long double latitude[100];
 long double longitude[100];
+bool flagx;
 bool flag1 = false;
 bool flag2 = false;
 bool flag3 = false;
@@ -199,7 +200,7 @@ void Handle_MiaMsg()
 void MotorDecode(uint32_t count)
 {
 	//if(motorData.MOTOR_DISTANCE_FROM_START_POINT_UNSIGNED != 0 && motorData.MOTOR_SPEED_DATA_UNSIGNED != 0 && count%4 == 0)
-	if(count%10 == 0)
+	if(count)
 	{
 		const char* s2 ;
 		ostringstream os1;
@@ -255,7 +256,7 @@ void GPSDecode()
 		//Continue accepting current location and sending to android
 		latlon[0] = latlon[0] + "#";
 		latlon[1] = latlon[1] + "$";
-		cout << "Latitude " <<   gpsData.GPS_LATTITUDE_SIGNED << " Longitude " << gpsData.GPS_LONGITUDE_SIGNED << endl;
+		//cout << "Latitude " <<   gpsData.GPS_LATTITUDE_SIGNED << " Longitude " << gpsData.GPS_LONGITUDE_SIGNED << endl;
 		s2 = latlon[0].c_str();
 		u3->putline(s2);
 		s2 = latlon[1].c_str();
@@ -265,36 +266,6 @@ void GPSDecode()
 	}
 }
 
-void MasterDecode(uint32_t count)
-{
-//	if(masterDriving.MASTER_DRIVE_ENUM == DRIVE && count%10 == 0)
-//	{
-//	switch(masterDriving.MASTER_STEER_ENUM)
-//	{
-//	   case RIGHT:
-//		   u3->putline("R*");
-//		   break;
-//	   case LEFT:
-//		   u3->putline("L*");
-//		   break;
-//	   case FAR_RIGHT:
-//		   u3->putline("R*");
-//		   break;
-//	   case FAR_LEFT:
-//		   u3->putline("L*");
-//		   break;
-//	   case CENTER:
-//		   u3->putline("F*");
-//		   break;
-//			}
-//
-//	}
-//	else
-//	{
-//		u3->putline("S*");
-//	}
-
-}
 
 void StartStopCheckpoint(uint32_t count)
 {

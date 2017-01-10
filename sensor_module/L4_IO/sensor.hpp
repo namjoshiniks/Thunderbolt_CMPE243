@@ -22,8 +22,6 @@ extern int rightDistance;
 extern int frontDistance;
 extern int backDistance;
 
-extern bool Sensorcomplete;
-
 //Start and stop signal
 extern bool startProcess;
 //Time
@@ -42,8 +40,6 @@ bool checkCANbus();
 
 void updateCANsonar(SENSOR_SONARS_t *CAN_sensor);
 
-bool initializeRX_1();
-bool initializeRX_2();
 
 void frontstartTimer(void);
 void frontstopTimer(void);
@@ -57,5 +53,10 @@ void rightstopTimer(void);
 void sendLEDmessage(int distance1, int distance2, int distance3);
 
 void enableHeadlights();
+
+void receive_COM_reset();
+
+void sensor_send_heartbeat();
+
 
 #endif /* L5_APPLICATION_SENSOR_HPP_ */

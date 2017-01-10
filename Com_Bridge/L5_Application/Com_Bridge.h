@@ -14,6 +14,8 @@
 #include "io.hpp"
 #include "_can_dbc/generated_can.h"
 #include "can.h"
+//extern bool flag1;
+ extern bool flagx;
 
 void init_periodic();
 
@@ -35,7 +37,6 @@ void CompassDecode(uint32_t count);
 
 void GPSDecode();
 
-void MasterDecode(uint32_t count);
 
 void StartStopCheckpoint(uint32_t count);
 

@@ -126,127 +126,148 @@ void default_motor_state()
 
 void handle_motors_from_sensor_data()
 {
-//	if((sensor_data.SENSOR_SONARS_FRONT_UNSIGNED == 8) && (sensor_data.SENSOR_SONARS_LEFT_UNSIGNED == 8) && (sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED == 8))
-//		{
-//			motor_drive = motor_drive_old;
-//		}
-
 	if(gps_data.GEO_DATA_ISFINAL_SIGNED == 0)
 	{
-			if(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED > 50)
+		if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED >= 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED >= 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED >=35))
+		{
+			get_Geo_Decision();
+			//printf("S_1_GEO\n");
+		}
+		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED >= 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED >= 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED <35))
+		{
+			//RIGHT
+		    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+		    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+		    motor_drive.MASTER_STEER_ENUM = RIGHT;
+		    LD.setNumber(3);
+		    //printf("S_2_R- L = %d\n", sensor_data.SENSOR_SONARS_LEFT_UNSIGNED);
+		}
+		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED >= 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED < 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED >=35))
+		{
+			if(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED >= 20)
 			{
-				if(sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>35)
+				if(sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED > sensor_data.SENSOR_SONARS_LEFT_UNSIGNED)
 				{
-					if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-					{
-						//MOVE_FORWARD
-		//		        motor_drive.MASTER_DRIVE_ENUM= DRIVE;
-		//		        motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		//		        motor_drive.MASTER_STEER_ENUM = CENTER;
-						get_Geo_Decision();
-						//LD.setNumber(1);
-					}
-					else
-					{
-						//RIGHT
-						motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-						motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-						motor_drive.MASTER_STEER_ENUM = RIGHT;
-						LD.setNumber(3);
-					}
-				}
-				else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>20) && (sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED<35))
-				{
-					if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-					{
-						//LEFT
-						motor_drive.MASTER_DRIVE_ENUM= DRIVE;
-						motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-						motor_drive.MASTER_STEER_ENUM = LEFT;
-						LD.setNumber(2);
-					}
-					else
-					{
-						//STOP
-						default_motor_state();
-					}
-				}
-				else if (sensor_data.SENSOR_SONARS_LEFT_UNSIGNED > 35)
-				{
-					motor_drive.MASTER_DRIVE_ENUM= DRIVE;
-					motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-					motor_drive.MASTER_STEER_ENUM = LEFT;
-					LD.setNumber(2);
+					//RIGHT
+				    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+				    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+				    motor_drive.MASTER_STEER_ENUM = RIGHT;
+				    LD.setNumber(3);
+				    //printf("S_3_R - L = %d\n", sensor_data.SENSOR_SONARS_LEFT_UNSIGNED);
 				}
 				else
 				{
-					//STOP
-					default_motor_state();
-				}
-			}
-			else if((sensor_data.SENSOR_SONARS_FRONT_UNSIGNED > 20) &&  (sensor_data.SENSOR_SONARS_FRONT_UNSIGNED < 70))
-			{
-				if(sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>35)
-				{
-					if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-					{
-						if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED > sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED)
-						{
-							//FAR_LEFT
-							motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-							motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-							motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
-							LD.setNumber(4);
-						}
-						else
-						{
-							//FAR_RIGHT
-							motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-							motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-							motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
-							LD.setNumber(5);
-						}
-					}
-					else
-					{
-						//FAR_RIGHT
-						motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-						motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-						motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
-						LD.setNumber(5);
-					}
-				}
-				else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED>20) && (sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED<35))
-				{
-					if(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED>35)
-					{
-						//FAR_LEFT
-						motor_drive.MASTER_DRIVE_ENUM= DRIVE;
-						motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-						motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
-						LD.setNumber(4);
-					}
-					else
-					{
-									//STOP
-						default_motor_state();
-					}
+					//LEFT
+				    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+				    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+				    motor_drive.MASTER_STEER_ENUM = LEFT;
+				    LD.setNumber(2);
+				    //printf("S_4_L\n");
 				}
 			}
 			else
 			{
-				//STOP
 				default_motor_state();
+				//printf("S_5_S\n");
 			}
+		}
+		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED >= 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED < 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED <35))
+		{
+			if(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED >= 20)
+			{
+				//FAR_RIGHT
+			    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+			    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+			    motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
+			    LD.setNumber(5);
+			    //printf("S_6_FR - L = %d\n", sensor_data.SENSOR_SONARS_LEFT_UNSIGNED);
+			}
+			else
+			{
+				default_motor_state();
+				//printf("S_7_S\n");
+			}
+		}
+		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED < 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED >= 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED >=35))
+		{
+			//LEFT
+		    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+		    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+		    motor_drive.MASTER_STEER_ENUM = LEFT;
+		    LD.setNumber(2);
+		    //printf("S_8_L\n");
+		}
+		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED < 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED >= 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED <35))
+		{
+			if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED >= 20) && (sensor_data.SENSOR_SONARS_LEFT_UNSIGNED >= 20))
+			{
+				//CENTER
+			    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+			    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+			    motor_drive.MASTER_STEER_ENUM = CENTER;
+			    LD.setNumber(1);
+			    //printf("S_9_C\n");
+			}
+			else
+			{
+				default_motor_state();
+				//printf("S_10_S\n");
+			}
+		}
+		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED < 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED < 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED >=35))
+		{
+			if(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED >= 20)
+			{
+				//FAR_LEFT
+			    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+			    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+			    motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
+			    LD.setNumber(4);
+			    //printf("S_11_FL\n");
+			}
+			else
+			{
+				default_motor_state();
+				//printf("S_12_S\n");
+			}
+		}
+		else if((sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED < 35) &&
+			(sensor_data.SENSOR_SONARS_FRONT_UNSIGNED < 50) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED < 35))
+		{
+			default_motor_state();
+			//printf("S_13_S\n");
+		}
+		else
+		{
+			default_motor_state();
+			//printf("S_14_S\n");
+		}
+
 	}
 	else
 	{
 		default_motor_state();
+		//printf("S_15_S\n");
 	}
 
-	if(car_speed.MOTOR_SPEED_DATA_UNSIGNED >= 36)
+	if(car_speed.MOTOR_SPEED_DATA_UNSIGNED >= 60)
         motor_drive.MASTER_SPEED_ENUM =  LOW;
-	else if((car_speed.MOTOR_SPEED_DATA_UNSIGNED < 36) && (car_speed.MOTOR_SPEED_DATA_UNSIGNED >= 12))
+	else if((car_speed.MOTOR_SPEED_DATA_UNSIGNED < 60) && (car_speed.MOTOR_SPEED_DATA_UNSIGNED >= 36))
         motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
 	else
         motor_drive.MASTER_SPEED_ENUM =  HIGH;
@@ -297,7 +318,7 @@ void handle_can_rx(can_t can)
 //			printf("Final_dest = %f\n", gps_data.GEO_DATA_DISTANCE_TO_FINAL_DESTINATION_SIGNED);
 //			printf("Next_checkpoint = %f\n", gps_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED);
 //			printf("Is final ?  = %d\n", gps_data.GEO_DATA_ISFINAL_SIGNED);
-			printf("Turn angle  = %f\n", gps_data.GEO_DATA_TURNANGLE_SIGNED);
+			//printf("TA = %f\n", gps_data.GEO_DATA_TURNANGLE_SIGNED);
 		}
 		else if(msg_header.mid == COM_BRIDGE_RESET_HDR.mid )
 		{
@@ -337,70 +358,87 @@ void handle_mia()
 	}
 	dbc_handle_mia_MOTOR_CAR_SPEED(&car_speed, 10);
 }
- void get_Geo_Decision()
- {
+void get_Geo_Decision()
+{
 
-     if(gps_data.GEO_DATA_TURNANGLE_SIGNED>30 && gps_data.GEO_DATA_TURNANGLE_SIGNED<70)
-     {
-		motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		motor_drive.MASTER_STEER_ENUM = RIGHT;
-		LD.setNumber(3);
-     }
-     else if(gps_data.GEO_DATA_TURNANGLE_SIGNED>=70)
-     {
-    	motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
-		LD.setNumber(5);
-     }
-     else if(gps_data.GEO_DATA_TURNANGLE_SIGNED<-30 && gps_data.GEO_DATA_TURNANGLE_SIGNED>-70)
-	  {
-		motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		motor_drive.MASTER_STEER_ENUM = LEFT;
-		LD.setNumber(2);
-	  }
-	  else if(gps_data.GEO_DATA_TURNANGLE_SIGNED<=-70)
-	  {
-		motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-		motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-		motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
-		LD.setNumber(4);
-	  }
-	  else
-	  {
-		  if(gps_data.GEO_DATA_DISTANCE_TO_NEXT_CHECKPOINT_SIGNED < 15)
-		  {
-			  if(gps_data.GEO_DATA_TURNANGLE_SIGNED<0)
-			  {
-				motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-				motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-				motor_drive.MASTER_STEER_ENUM = LEFT;
-				LD.setNumber(1);
-
-			  }
-			  else if(gps_data.GEO_DATA_TURNANGLE_SIGNED>0)
-			  {
-				motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-				motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-				motor_drive.MASTER_STEER_ENUM = RIGHT;
-				LD.setNumber(1);
-			  }
-			  else
-			  {
-				motor_drive.MASTER_DRIVE_ENUM = DRIVE;
-				motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-				motor_drive.MASTER_STEER_ENUM = CENTER;
-				LD.setNumber(1);
-			  }
-		  }
-		  else
-		  {
+	if((gps_data.GEO_DATA_TURNANGLE_SIGNED >= -10) && (gps_data.GEO_DATA_TURNANGLE_SIGNED <= 10))
+	{
+		//CENTER
+	    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+	    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+	    motor_drive.MASTER_STEER_ENUM = CENTER;
+	    LD.setNumber(1);
+	    //printf("G_1_C\n");
+	}
+	else if((gps_data.GEO_DATA_TURNANGLE_SIGNED >= -90) && (gps_data.GEO_DATA_TURNANGLE_SIGNED < -10))
+	{
+		//LEFT
+	    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+	    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+	    motor_drive.MASTER_STEER_ENUM = LEFT;
+	    LD.setNumber(2);
+	    //printf("G_2_L\n");
+	}
+	else if((gps_data.GEO_DATA_TURNANGLE_SIGNED > 10) && (gps_data.GEO_DATA_TURNANGLE_SIGNED <= 90))
+	{
+		//RIGHT
+	    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+	    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+	    motor_drive.MASTER_STEER_ENUM = RIGHT;
+	    LD.setNumber(3);
+	    //printf("G_3_R  - TA = %f\n", gps_data.GEO_DATA_TURNANGLE_SIGNED);
+	}
+	else if((gps_data.GEO_DATA_TURNANGLE_SIGNED < -90))
+	{
+		if((gps_data.GEO_DATA_TURNANGLE_SIGNED >= -180) &&
+			(gps_data.GEO_DATA_TURNANGLE_SIGNED <= -120) &&
+			(sensor_data.SENSOR_SONARS_LEFT_UNSIGNED <= 50))
+		{
+			//FAR_LEFT
+		    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+		    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+		    motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
+		    LD.setNumber(5);
+		}
+		else
+		{
+			//FAR_LEFT
 			motor_drive.MASTER_DRIVE_ENUM = DRIVE;
 			motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
-			motor_drive.MASTER_STEER_ENUM = CENTER;
-			LD.setNumber(1);
-		  }
-	  }
- }
+			motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
+			LD.setNumber(4);
+			//printf("G_4_FL\n");
+		}
+	}
+	else if((gps_data.GEO_DATA_TURNANGLE_SIGNED > 90))
+	{
+		if((gps_data.GEO_DATA_TURNANGLE_SIGNED >= 120) &&
+			(gps_data.GEO_DATA_TURNANGLE_SIGNED <= 180) &&
+			(sensor_data.SENSOR_SONARS_RIGHT_UNSIGNED <= 50))
+		{
+			//FAR_LEFT
+		    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+		    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+		    motor_drive.MASTER_STEER_ENUM = FAR_LEFT;
+		    LD.setNumber(4);
+		}
+		else
+		{
+			//FAR_RIGHT
+			motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+			motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+			motor_drive.MASTER_STEER_ENUM = FAR_RIGHT;
+			LD.setNumber(5);
+			//printf("G_6_FR - TA = %f\n", gps_data.GEO_DATA_TURNANGLE_SIGNED);
+		}
+	}
+	else
+	{
+		//CENTER
+	    motor_drive.MASTER_DRIVE_ENUM = DRIVE;
+	    motor_drive.MASTER_SPEED_ENUM =  MEDIUM;
+	    motor_drive.MASTER_STEER_ENUM = CENTER;
+	    LD.setNumber(1);
+	    //printf("G_7_C\n");
+	}
+}

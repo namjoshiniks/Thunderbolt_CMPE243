@@ -47,7 +47,6 @@ static GPIO *Sensor_RX2 = new GPIO(P0_29);
 static GPIO *Sensor_RX3 = new GPIO(P1_19);
 //static GPIO *Sensor_RX4 = new GPIO(P1_20);
 
-
 /**
  * This is the stack size of the dispatcher task that triggers the period tasks to run.
  * Minimum 1500 bytes are needed in order to write a debug file if the period tasks overrun.
@@ -59,7 +58,9 @@ const uint32_t PERIOD_DISPATCHER_TASK_STACK_SIZE_BYTES = (512 * 3);
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
 {
+	//initial delay for sensors
 	delay_ms(250);
+
 	//enable interrupt pins
 	eint3_enable_port2(0, eint_rising_edge, frontstartTimer);
 	eint3_enable_port2(0, eint_falling_edge, frontstopTimer);
@@ -70,15 +71,13 @@ bool period_init(void)
 	eint3_enable_port2(3, eint_rising_edge, rightstartTimer);
 	eint3_enable_port2(3, eint_falling_edge, rightstopTimer);
 
-	//initialize RX1 and RX2 for sensors
-	//initializeRX_1();
-	//initializeRX_2();
 
 	//enable SSP1
     ssp1_init();
     Sensor_RX1->setAsOutput();
     Sensor_RX2->setAsOutput();
     Sensor_RX3->setAsOutput();
+
 	//CAN initialization
     initializeCAN();
 
@@ -106,6 +105,7 @@ bool period_reg_tlm(void)
 
 void period_1Hz(uint32_t count)
 {
+
 	//Check CAN bus
 	if(checkCANbus())
 	{
@@ -113,29 +113,7 @@ void period_1Hz(uint32_t count)
 	}
 	else
 	{
-		LE.off(4);
-		static SENSOR_HEARTBEAT_t sensor_heartbeat;
-		sensor_heartbeat.SENSOR_HEARTBEAT_UNSIGNED = 336;
-
-		can_msg_t can_msg = {0};
-
-		// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
-		dbc_msg_hdr_t msg_hdr = dbc_encode_SENSOR_HEARTBEAT(can_msg.data.bytes, &sensor_heartbeat);
-		can_msg.msg_id = msg_hdr.mid;
-		can_msg.frame_fields.data_len = msg_hdr.dlc;
-
-        if (Sensorcomplete)
-        {
-    		if(CAN_tx(can1, &can_msg, 0))
-    		 {
-    //			printf("Send heartbeat success\n");
-    		 }
-    		 else
-    		 {
-    			printf("Send heartbeat fail!\n");
-    		 }
-
-        }
+		sensor_send_heartbeat();
 	}
 
 	enableHeadlights();
@@ -143,32 +121,7 @@ void period_1Hz(uint32_t count)
 
 void period_10Hz(uint32_t count)
 {
-//	static SENSOR_SONARS_t sonar_data;
-//	updateCANsonar(&sonar_data);
-//	can_msg_t can_msg = {0};
-//
-//	// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
-//
-//	dbc_msg_hdr_t msg_hdr = dbc_encode_SENSOR_SONARS(can_msg.data.bytes, &sonar_data);
-//	can_msg.msg_id = msg_hdr.mid;
-//	can_msg.frame_fields.data_len = msg_hdr.dlc;
-//
-//	// Queue the CAN message to be sent out
-//	if (Sensorcomplete)
-//	{
-//		if(CAN_tx(can1, &can_msg, 0))
-//		{
-//	//	   printf("Send data success\n");
-//			Sensorcomplete = false;
-//		}
-//		else
-//		{
-//			printf("Send data fail!\n");
-//		}
-//
-//	}
-//
-//	sendLEDmessage(leftDistance, frontDistance, rightDistance);
+	receive_COM_reset();
 }
 
 void period_100Hz(uint32_t count)
@@ -178,31 +131,22 @@ void period_100Hz(uint32_t count)
 
 	if(sensorCount == 0)
 	{
-//		Sensor_RX2->setLow();
-//		vTaskDelay(10);
 		Sensor_RX1->setHigh();
 		delay_us(20);
 		Sensor_RX1->setLow();
 	}
 	else if(sensorCount == 6)
 	{
-//		printf("DISTANCE 1 and 2 **************\n"); //testing
-//    	printf("Front: %i\n", frontDistance);
-//		printf("Back: %i\n", backDistance);
 		Sensor_RX2->setHigh();
 		delay_us(20);
 		Sensor_RX2->setLow();
 	}
 	else if(sensorCount == 12)
 	{
-//        printf("DISTANCE 3 and 4 ===============\n"); //testing
-//        printf("Left: %i\n", leftDistance); //testing don't need delay
-//        printf("Right: %i\n", rightDistance); //testing don't need delay
+		//turn on
 		  Sensor_RX3->setHigh();
 		  delay_us(20);
 		  Sensor_RX3->setLow();
-//		  Sensorcomplete = true;
-//		sensorCount = -1;
 	}
 	else if(sensorCount == 18)
 	{
@@ -211,7 +155,6 @@ void period_100Hz(uint32_t count)
 		can_msg_t can_msg = {0};
 
 		// Encode the CAN message's data bytes, get its header and set the CAN message's DLC and length
-
 		dbc_msg_hdr_t msg_hdr = dbc_encode_SENSOR_SONARS(can_msg.data.bytes, &sonar_data);
 		can_msg.msg_id = msg_hdr.mid;
 		can_msg.frame_fields.data_len = msg_hdr.dlc;
@@ -219,15 +162,13 @@ void period_100Hz(uint32_t count)
 		// Queue the CAN message to be sent out
 			if(CAN_tx(can1, &can_msg, 0))
 			{
-		//	   printf("Send data success\n");
-				Sensorcomplete = false;
+			//sensor data sent successfully
 			}
 			else
 			{
 				printf("Send data fail!\n");
 			}
 
-		sendLEDmessage(leftDistance, frontDistance, rightDistance);
 		  sensorCount = -1;
 	}
 
